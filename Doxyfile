@@ -1,0 +1,22 @@
+#-----------------------------------------------------------------------------
+# Doxygen config file para SystemVerilog con comentarios tipo Doxygen
+#-----------------------------------------------------------------------------
+
+PROJECT_NAME           = "HSI RTL Modules"
+PROJECT_BRIEF          = "Documentación automática de módulos RTL para procesamiento HSI"
+OUTPUT_DIRECTORY       = doc
+INPUT                  = rtl tb
+RECURSIVE              = YES
+
+FILE_PATTERNS          = *.sv
+EXTENSION_MAPPING      = sv=C
+
+EXTRACT_ALL            = YES
+MARKDOWN_SUPPORT       = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+QUIET                  = YES
