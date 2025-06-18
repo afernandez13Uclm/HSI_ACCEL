@@ -44,6 +44,18 @@ This will generate:
 ```bash
 gtkwave dump.vcd
 ```
+### View Coverage
+
+```bash
+make coverage
+```
+Open in a web browser the file `coverage/index.html`
+
+### Project clean
+
+```bash
+make clean
+```
 
 ## Functional Requirements Tested
 
@@ -51,6 +63,7 @@ The testbench `hsi_vector_core_tb.sv` verifies:
 - TBD
 
 The testbench `fifo_cache_tb.sv` verifies:
+- TBD
 
 ## Notes
 
