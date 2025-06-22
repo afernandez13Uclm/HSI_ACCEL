@@ -26,8 +26,8 @@ module hsi_vector_core_tb;
   // Parámetros y constantes
   // ---------------------------------------------------------------------------
   parameter int COMPONENT_WIDTH = 16;
-  parameter int OPC_WIDTH       = 2;
-  localparam logic [OPC_WIDTH-1:0] OP_CROSS = 2'b01;
+  parameter int COMPONENTS_MAX = 3;
+  localparam logic [3:0] OP_CROSS = 4'b01;
 
   // ---------------------------------------------------------------------------
   // Señales
@@ -38,7 +38,7 @@ module hsi_vector_core_tb;
 
   // entradas DUT
   logic                  in1_wr_en, in2_wr_en;
-  logic [3*COMPONENT_WIDTH-1:0] in1_data_in, in2_data_in;
+  logic [COMPONENTS_MAX*COMPONENT_WIDTH-1:0] in1_data_in, in2_data_in;
   /* verilator lint_off UNUSEDSIGNAL */
   logic                  in1_full, in2_full;
   /* verilator lint_on UNUSEDSIGNAL */
@@ -48,10 +48,18 @@ module hsi_vector_core_tb;
   /* verilator lint_off UNUSEDSIGNAL */
   logic                  out_empty, out_full;
   /* verilator lint_on UNUSEDSIGNAL */
-  logic [3*COMPONENT_WIDTH-1:0] out_data_out;
+  logic [COMPONENTS_MAX*COMPONENT_WIDTH-1:0] out_data_out;
 
   // opcode
-  logic [OPC_WIDTH-1:0] op_code;
+  logic [3:0] op_code;
+  // start signal
+  logic start = 1'b1;
+  // pixel_done y error_code (no usados en este test)
+  /* verilator lint_off UNUSEDSIGNAL */
+  logic pixel_done;
+  logic [3:0] error_code;
+  /* verilator lint_on UNUSEDSIGNAL */
+  //
 
   // flags de verificación
   logic passed2, passed3, passed4, passed5;
@@ -62,7 +70,7 @@ module hsi_vector_core_tb;
   hsi_vector_core #(
     .COMPONENT_WIDTH(COMPONENT_WIDTH),
     .FIFO_DEPTH     (8),
-    .OPC_WIDTH      (OPC_WIDTH)
+    .COMPONENTS_MAX (COMPONENTS_MAX)
   ) dut (
     .clk           (clk),
     .rst_n         (rst_n),
@@ -76,7 +84,11 @@ module hsi_vector_core_tb;
     .out_empty     (out_empty),
     .out_data_out  (out_data_out),
     .out_full      (out_full),
-    .op_code       (op_code)
+    .op_code       (op_code),
+    .num_bands     (COMPONENTS_MAX), // Número de bandas/componentes
+    .start         (start),           // Señal de inicio 
+    .pixel_done    (pixel_done),                // Señal de pixel procesado (no usada en este test)
+    .error_code    (error_code)                 // Código de error (no usado en este test)
   );
 
   `ifndef VERILATOR
@@ -156,7 +168,7 @@ module hsi_vector_core_tb;
     input signed [COMPONENT_WIDTH-1:0] a1, b1, c1,
     input signed [COMPONENT_WIDTH-1:0] a2, b2, c2
   );
-    logic [3*COMPONENT_WIDTH-1:0] v1, v2;
+    logic [COMPONENTS_MAX*COMPONENT_WIDTH-1:0] v1, v2;
     begin
       v1 = {a1, b1, c1};
       v2 = {a2, b2, c2};
