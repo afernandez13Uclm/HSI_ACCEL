@@ -63,16 +63,16 @@ The testbench `hsi_vector_core_tb.sv` verifies:
 - TBD
 
 The testbench `fifo_cache_tb.sv` verifies:
- * R1: Tras reset, la FIFO debe estar vacía (empty == 1).
- * R2: Escritura permitida cuando la FIFO no está llena (wr_en == 1 y full == 0).
- * R3: Señal full debe activarse al alcanzar DEPTH escrituras.
- * R4: Lectura permitida cuando la FIFO no está vacía (rd_en == 1 y empty == 0).
- * R5: Señal empty debe activarse tras leer todos los datos.
- * R6: Escritura cuando full no debe alterar datos ni punteros.
- * R7: Lectura cuando empty no debe alterar datos ni punteros.
- * R8: Integridad de datos: data_out debe coincidir con la secuencia escrita.
- * R9: Operaciones back-to-back de escritura y lectura consecutivas sin errores.
- * R10: Comportamiento robusto bajo secuencias aleatorias sin violaciones.
+ * R1: After reset, the FIFO must be empty (empty == 1).
+ * R2: Write is permitted when the FIFO is not full (wr_en == 1 and full == 0).
+ * R3: The full signal must assert once DEPTH writes have been performed.
+ * R4: Read is permitted when the FIFO is not empty (rd_en == 1 and empty == 0).
+ * R5: The empty signal must assert after all data has been read.
+ * R6: Writing when full is asserted must not alter stored data or pointer values.
+ * R7: Reading when empty is asserted must not alter stored data or pointer values.
+ * R8: Data integrity: data_out must match the sequence that was written.
+ * R9: Back-to-back write and read operations must execute consecutively without errors.
+ * R10: Robust behavior under random operation sequences, with no protocol violations.
 
 ## Notes
 
