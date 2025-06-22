@@ -63,7 +63,16 @@ The testbench `hsi_vector_core_tb.sv` verifies:
 - TBD
 
 The testbench `fifo_cache_tb.sv` verifies:
-- TBD
+ * R1: Tras reset, la FIFO debe estar vacía (empty == 1).
+ * R2: Escritura permitida cuando la FIFO no está llena (wr_en == 1 y full == 0).
+ * R3: Señal full debe activarse al alcanzar DEPTH escrituras.
+ * R4: Lectura permitida cuando la FIFO no está vacía (rd_en == 1 y empty == 0).
+ * R5: Señal empty debe activarse tras leer todos los datos.
+ * R6: Escritura cuando full no debe alterar datos ni punteros.
+ * R7: Lectura cuando empty no debe alterar datos ni punteros.
+ * R8: Integridad de datos: data_out debe coincidir con la secuencia escrita.
+ * R9: Operaciones back-to-back de escritura y lectura consecutivas sin errores.
+ * R10: Comportamiento robusto bajo secuencias aleatorias sin violaciones.
 
 ## Notes
 
