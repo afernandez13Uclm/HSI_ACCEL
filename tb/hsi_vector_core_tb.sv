@@ -19,250 +19,296 @@
  * -------------------------------------------------------------------------
  */
 `timescale 1ns/1ps
-
 module hsi_vector_core_tb;
 
-  // ---------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Parámetros y constantes
-  // ---------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   parameter int COMPONENT_WIDTH = 16;
-  parameter int COMPONENTS_MAX = 3;
-  localparam logic [3:0] OP_CROSS = 4'b01;
+  parameter int COMPONENTS_MAX  = 3;      
+  parameter int FIFO_DEPTH      = 8;
 
-  // ---------------------------------------------------------------------------
+  localparam logic [3:0] OP_CROSS = 4'd1;
+  localparam logic [3:0] OP_DOT   = 4'd2;
+
+  // Códigos de error RTL:
+  localparam ERR_NONE   = 4'd0;
+  localparam ERR_OP     = 4'd1;
+  localparam ERR_BANDS  = 4'd4;
+
+  //---------------------------------------------------------------------------
   // Señales
-  // ---------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // reloj y reset
   logic clk = 0;
   logic rst_n;
 
-  // entradas DUT
-  logic                  in1_wr_en, in2_wr_en;
-  logic [COMPONENTS_MAX*COMPONENT_WIDTH-1:0] in1_data_in, in2_data_in;
+  // Entradas DUT
+  logic                       in1_wr_en,  in2_wr_en;
+  logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0] in1_data_in, in2_data_in;
   /* verilator lint_off UNUSEDSIGNAL */
-  logic                  in1_full, in2_full;
+  logic                       in1_full,    in2_full;
   /* verilator lint_on UNUSEDSIGNAL */
 
-  // salidas DUT
-  logic                  out_rd_en;
+  // Salidas DUT
+  logic                       out_rd_en;
   /* verilator lint_off UNUSEDSIGNAL */
-  logic                  out_empty, out_full;
+  logic                       out_empty,   out_full;
   /* verilator lint_on UNUSEDSIGNAL */
-  logic [COMPONENTS_MAX*COMPONENT_WIDTH-1:0] out_data_out;
+  logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0] out_data_out;
 
-  // opcode
-  logic [3:0] op_code;
-  // start signal
-  logic start = 1'b1;
-  // pixel_done y error_code (no usados en este test)
-  /* verilator lint_off UNUSEDSIGNAL */
-  logic pixel_done;
-  logic [3:0] error_code;
-  /* verilator lint_on UNUSEDSIGNAL */
-  //
+  // Control
+  logic [3:0]  op_code;
+  logic [31:0] num_bands;                
+  logic        start      = 1'b0;
 
-  // flags de verificación
-  logic passed2, passed3, passed4, passed5;
+  // Estado / error
+  logic        pixel_done;
+  logic [3:0]  error_code;
 
-  // ---------------------------------------------------------------------------
-  // Instanciación del DUT
-  // ---------------------------------------------------------------------------
+  // Flags para verificación
+  logic passed2, passed3, passed4, passed5;     // R1 (cross)
+  logic passed6, passed7, passed8;              // R2 (dot)
+  logic passed_err1, passed_err2;               // R3 (errores)
+
+  //---------------------------------------------------------------------------
+  // Instancia del DUT
+  //---------------------------------------------------------------------------
   hsi_vector_core #(
-    .COMPONENT_WIDTH(COMPONENT_WIDTH),
-    .FIFO_DEPTH     (8),
-    .COMPONENTS_MAX (COMPONENTS_MAX)
+      .COMPONENT_WIDTH(COMPONENT_WIDTH),
+      .FIFO_DEPTH     (FIFO_DEPTH),
+      .COMPONENTS_MAX (COMPONENTS_MAX)
   ) dut (
-    .clk           (clk),
-    .rst_n         (rst_n),
-    .in1_wr_en     (in1_wr_en),
-    .in1_data_in   (in1_data_in),
-    .in1_full      (in1_full),
-    .in2_wr_en     (in2_wr_en),
-    .in2_data_in   (in2_data_in),
-    .in2_full      (in2_full),
-    .out_rd_en     (out_rd_en),
-    .out_empty     (out_empty),
-    .out_data_out  (out_data_out),
-    .out_full      (out_full),
-    .op_code       (op_code),
-    .num_bands     (COMPONENTS_MAX), // Número de bandas/componentes
-    .start         (start),           // Señal de inicio 
-    .pixel_done    (pixel_done),                // Señal de pixel procesado (no usada en este test)
-    .error_code    (error_code)                 // Código de error (no usado en este test)
+      .clk(clk),
+      .rst_n(rst_n),
+      .in1_wr_en(in1_wr_en),
+      .in1_data_in(in1_data_in),
+      .in1_full(in1_full),
+      .in2_wr_en(in2_wr_en),
+      .in2_data_in(in2_data_in),
+      .in2_full(in2_full),
+      .out_rd_en(out_rd_en),
+      .out_empty(out_empty),
+      .out_data_out(out_data_out),
+      .out_full(out_full),
+      .op_code(op_code),
+      .num_bands(num_bands),
+      .start(start),
+      .pixel_done(pixel_done),
+      .error_code(error_code)
   );
 
-  `ifndef VERILATOR
-    /* verilator lint_off DECLFILENAME */
-    /* verilator lint_off COVERIGN */
-    covergroup cg_vector @(posedge clk);
-      // componentes de in1
-      coverpoint in1_data_in[3*COMPONENT_WIDTH-1 -: COMPONENT_WIDTH] {
-        bins neg   = { -1 };
-        bins zero  = { 0 };
-        bins pos   = { 1 };
-      }
-      coverpoint in1_data_in[2*COMPONENT_WIDTH-1 -: COMPONENT_WIDTH] {
-        bins neg   = { -1 };
-        bins zero  = { 0 };
-        bins pos   = { 1 };
-      }
-      coverpoint in1_data_in[COMPONENT_WIDTH-1 -: COMPONENT_WIDTH] {
-        bins neg   = { -1 };
-        bins zero  = { 0 };
-        bins pos   = { 1 };
-      }
-      // componentes de in2
-      coverpoint in2_data_in[3*COMPONENT_WIDTH-1 -: COMPONENT_WIDTH] {
-        bins neg   = { -1 };
-        bins zero  = { 0 };
-        bins pos   = { 1 };
-      }
-      coverpoint in2_data_in[2*COMPONENT_WIDTH-1 -: COMPONENT_WIDTH] {
-        bins neg   = { -1 };
-        bins zero  = { 0 };
-        bins pos   = { 1 };
-      }
-      coverpoint in2_data_in[COMPONENT_WIDTH-1 -: COMPONENT_WIDTH] {
-        bins neg   = { -1 };
-        bins zero  = { 0 };
-        bins pos   = { 1 };
-      }
-      // opcode
-      coverpoint op_code {
-        bins cross = { OP_CROSS };
-      }
-      // salida
-      coverpoint rx;
-      coverpoint ry;
-      coverpoint rz;
-      // cruce de interés
-      cross in1_data_in, in2_data_in, rz;
-    endgroup
-
-    fifo_cvg cg = new();
-    /* verilator lint_on COVERIGN */
-  `endif
-
-  // ---------------------------------------------------------------------------
-  // Generación de reloj
-  // ---------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
+  // Reloj
+  //---------------------------------------------------------------------------
   always #5 clk = ~clk;
 
-  // ---------------------------------------------------------------------------
-  // Muestreo de cobertura al leer salida
-  // ---------------------------------------------------------------------------
-  `ifndef VERILATOR
-  always @(posedge clk) begin
-    if (out_rd_en)
-      cg.sample();
-  end
-  `endif
+  //---------------------------------------------------------------------------
+  // Funciones auxiliares
+  //---------------------------------------------------------------------------
   function automatic signed [COMPONENT_WIDTH-1:0] get_comp(
-    input logic [3*COMPONENT_WIDTH-1:0] vec,
-    input int idx
+      input logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0] vec,
+      input int idx
   );
-    get_comp = vec[3*COMPONENT_WIDTH-1 - idx*COMPONENT_WIDTH -: COMPONENT_WIDTH];
+      get_comp = vec[(COMPONENTS_MAX-idx-1)*COMPONENT_WIDTH +: COMPONENT_WIDTH];
   endfunction
 
   task push_vectors(
-    input signed [COMPONENT_WIDTH-1:0] a1, b1, c1,
-    input signed [COMPONENT_WIDTH-1:0] a2, b2, c2
+      input signed [COMPONENT_WIDTH-1:0] a1, b1, c1,
+      input signed [COMPONENT_WIDTH-1:0] a2, b2, c2
   );
-    logic [COMPONENTS_MAX*COMPONENT_WIDTH-1:0] v1, v2;
+      logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0] v1, v2;
+      begin
+          v1 = {a1, b1, c1};
+          v2 = {a2, b2, c2};
+          @(posedge clk);
+              in1_data_in = v1;
+              in2_data_in = v2;
+              in1_wr_en   = 1;
+              in2_wr_en   = 1;
+          @(posedge clk);
+              in1_wr_en   = 0;
+              in2_wr_en   = 0;
+      end
+  endtask
+
+  //---------------------------------------------------------------------------
+  // Cobertura funcional 
+  //---------------------------------------------------------------------------
+`ifndef VERILATOR
+  covergroup cg_vector @(posedge clk);
+      coverpoint op_code      { bins cross = {OP_CROSS}; bins dot = {OP_DOT}; }
+      coverpoint error_code   { bins ok[]  = {[0:4]}; } 
+      coverpoint pixel_done   { bins pulse = {1}; }
+  endgroup
+  cg_vector cg = new();
+  always @(posedge clk) if (pixel_done) cg.sample();
+`endif
+
+  //---------------------------------------------------------------------------
+  // Test sequence principal
+  //---------------------------------------------------------------------------
+  initial begin
+      // Inicialización
+      in1_wr_en = 0; in2_wr_en = 0; out_rd_en = 0;
+      start      = 0;
+      passed2=0; passed3=0; passed4=0; passed5=0;
+      passed6=0; passed7=0; passed8=0;
+      passed_err1=0; passed_err2=0;
+
+      // Reset síncrono activo a bajo
+      rst_n = 0; num_bands = 3; op_code = OP_CROSS;
+      #20 rst_n = 1;
+      @(posedge clk);
+
+      // --------------------------------------------------------------------
+      // R1 – Cross-product
+      // --------------------------------------------------------------------
+      // R1.2  (1,0,0)x(0,1,0) -> (0,0,1)
+      cross_test(1,0,0, 0,1,0, 0,0,1, passed2, "R1.2");
+
+      // R1.3  (0,0,1)x(1,0,0) -> (0,1,0)
+      cross_test(0,0,1, 1,0,0, 0,1,0, passed3, "R1.3");
+
+      // R1.4  (1,2,3)x(4,5,6) -> (-3,6,-3)
+      cross_test(1,2,3, 4,5,6, -3,6,-3, passed4, "R1.4");
+
+      // R1.5  (-1,0,0)x(0,1,0) -> (0,0,-1)
+      cross_test(-1,0,0, 0,1,0, 0,0,-1, passed5, "R1.5");
+
+      if (passed2 & passed3 & passed4 & passed5)
+          $display("R1 PASSED.");
+      else
+          $fatal("R1 FAILED.");
+
+      // --------------------------------------------------------------------
+      // R2 – Dot-product
+      // --------------------------------------------------------------------
+      op_code   = OP_DOT;
+      num_bands = 3;
+
+      // R2.1  (1,0,0)·(0,1,0) = 0
+      dot_test(1,0,0, 0,1,0, 0, passed6, "R2.1");
+
+      // R2.2  (1,2,3)·(4,5,6) = 32
+      dot_test(1,2,3, 4,5,6, 32, passed7, "R2.2");
+
+      // R2.3  (-1,0,0)·(0,1,0) = 0
+      dot_test(-1,0,0, 0,1,0, 0, passed8, "R2.3");
+
+      if (passed6 & passed7 & passed8)
+          $display("R2 PASSED.");
+      else
+          $fatal("R2 FAILED.");
+
+      // --------------------------------------------------------------------
+      // R3 – Gestión de errores
+      // --------------------------------------------------------------------
+      // R3.1  OP_CROSS pero num_bands != 3  -> ERR_OP
+      @(posedge clk);
+      op_code   = OP_CROSS;
+      num_bands = 2;     // configuración ilegal
+      @(posedge clk);
+      if (error_code == ERR_OP) begin
+          passed_err1 = 1;
+          $display("R3.1 PASSED (ERR_OP detectado).");
+      end else $fatal("R3.1 FAILED (error_code=%0d)", error_code);
+
+      // R3.2  num_bands > COMPONENTS_MAX      -> ERR_BANDS
+      @(posedge clk);
+      op_code   = OP_DOT;
+      num_bands = COMPONENTS_MAX + 1;
+      @(posedge clk);
+      if (error_code == ERR_BANDS) begin
+          passed_err2 = 1;
+          $display("R3.2 PASSED (ERR_BANDS detectado).");
+      end else $fatal("R3.2 FAILED (error_code=%0d)", error_code);
+
+      if (passed_err1 & passed_err2)
+          $display("R3 PASSED.");
+      else
+          $fatal("R3 FAILED.");
+
+      //---------------------------------------------------------------------
+      $display("Todas las verificaciones completadas con éxito.");
+      $finish;
+  end // initial
+
+  //---------------------------------------------------------------------------
+  // Tareas específicas de cada tipo de test
+  //---------------------------------------------------------------------------
+  task automatic cross_test(
+    input  logic signed [COMPONENT_WIDTH-1:0] x1, y1, z1,
+    input  logic signed [COMPONENT_WIDTH-1:0] x2, y2, z2,
+    input  logic signed [COMPONENT_WIDTH-1:0] exp_x, exp_y, exp_z,
+    output logic                            flag,
+    input  string                           tag
+  );
+    // variables locales
+    logic signed [COMPONENT_WIDTH-1:0] rx, ry, rz;
     begin
-      v1 = {a1, b1, c1};
-      v2 = {a2, b2, c2};
-      @(posedge clk);
-        in1_data_in = v1;
-        in2_data_in = v2;
-        in1_wr_en   = 1;
-        in2_wr_en   = 1;
-      @(posedge clk);
-        in1_wr_en   = 0;
-        in2_wr_en   = 0;
+      push_vectors(x1,y1,z1, x2,y2,z2);
+      @(posedge clk) start = 1;
+      @(posedge clk) start = 0;
+      wait (!out_empty);
+      @(posedge clk) out_rd_en = 1;
+      @(posedge clk) begin
+        out_rd_en = 0;
+        if (!pixel_done)
+          $error("%s FAILED: pixel_done no activo.", tag);
+
+        // extraer componentes
+        rx = get_comp(out_data_out, 0);
+        ry = get_comp(out_data_out, 1);
+        rz = get_comp(out_data_out, 2);
+
+        if (rx==exp_x && ry==exp_y && rz==exp_z && error_code==ERR_NONE) begin
+          flag = 1;
+          $display("%s PASSED: (%0d,%0d,%0d)", tag, rx, ry, rz);
+        end else begin
+          flag = 0;
+          $error("%s FAILED: got (%0d,%0d,%0d) err=%0d",
+                 tag, rx, ry, rz, error_code);
+        end
+      end
     end
   endtask
 
-  initial begin
-    // inicializar señales
-    in1_wr_en = 0; in2_wr_en = 0; out_rd_en = 0;
-    op_code   = OP_CROSS;
-    passed2 = 0; passed3 = 0; passed4 = 0; passed5 = 0;
 
-    // reset
-    rst_n = 0;
-    #20;
-    rst_n = 1;
-    @(posedge clk);
-
-    // --- Test R1.2: (1,0,0)x(0,1,0) -> (0,0,1) ---
-    push_vectors(1,0,0, 0,1,0);
-    wait (!out_empty);
-    @(posedge clk) out_rd_en = 1;
-    @(posedge clk) out_rd_en = 0;
+  task automatic dot_test(
+    input  logic signed [COMPONENT_WIDTH-1:0] x1, y1, z1,
+    input  logic signed [COMPONENT_WIDTH-1:0] x2, y2, z2,
+    input  logic signed [31:0]               exp,
+    output logic                            flag,
+    input  string                           tag
+  );
+    // variable local
+    logic signed [COMPONENT_WIDTH-1:0] r;
     begin
-      logic signed [COMPONENT_WIDTH-1:0] rx = get_comp(out_data_out,0);
-      logic signed [COMPONENT_WIDTH-1:0] ry = get_comp(out_data_out,1);
-      logic signed [COMPONENT_WIDTH-1:0] rz = get_comp(out_data_out,2);
-      if (rx==0 && ry==0 && rz==1) begin
-        passed2 = 1;
-        $display("R1.2 PASSED: (%0d,%0d,%0d)", rx, ry, rz);
-      end else $error("R1.2 FAILED: got (%0d,%0d,%0d)", rx, ry, rz);
-    end
+      push_vectors(x1,y1,z1, x2,y2,z2);
+      @(posedge clk) start = 1;
+      @(posedge clk) start = 0;
+      wait (!out_empty);
+      @(posedge clk) out_rd_en = 1;
+      @(posedge clk) begin
+        out_rd_en = 0;
+        if (!pixel_done)
+          $error("%s FAILED: pixel_done no activo.", tag);
 
-    // --- Test R1.3: (0,0,1)x(1,0,0) -> (0,1,0) ---
-    push_vectors(0,0,1, 1,0,0);
-    wait (!out_empty);
-    @(posedge clk) out_rd_en = 1;
-    @(posedge clk) out_rd_en = 0;
-    begin
-      logic signed [COMPONENT_WIDTH-1:0] rx = get_comp(out_data_out,0);
-      logic signed [COMPONENT_WIDTH-1:0] ry = get_comp(out_data_out,1);
-      logic signed [COMPONENT_WIDTH-1:0] rz = get_comp(out_data_out,2);
-      if (rx==0 && ry==1 && rz==0) begin
-        passed3 = 1;
-        $display("R1.3 PASSED: (%0d,%0d,%0d)", rx, ry, rz);
-      end else $error("R1.3 FAILED: got (%0d,%0d,%0d)", rx, ry, rz);
-    end
+        // extraer resultado (solo componente 0)
+        r = get_comp(out_data_out, 0);
 
-    // --- Test R1.4: (1,2,3)x(4,5,6) -> (-3,6,-3) ---
-    push_vectors(1,2,3, 4,5,6);
-    wait (!out_empty);
-    @(posedge clk) out_rd_en = 1;
-    @(posedge clk) out_rd_en = 0;
-    begin
-      logic signed [COMPONENT_WIDTH-1:0] rx = get_comp(out_data_out,0);
-      logic signed [COMPONENT_WIDTH-1:0] ry = get_comp(out_data_out,1);
-      logic signed [COMPONENT_WIDTH-1:0] rz = get_comp(out_data_out,2);
-      if (rx==-3 && ry==6 && rz==-3) begin
-        passed4 = 1;
-        $display("R1.4 PASSED: (%0d,%0d,%0d)", rx, ry, rz);
-      end else $error("R1.4 FAILED: got (%0d,%0d,%0d)", rx, ry, rz);
+        if (r == exp[COMPONENT_WIDTH-1:0] && error_code==ERR_NONE) begin
+          flag = 1;
+          $display("%s PASSED: result=%0d", tag, r);
+        end else begin
+          flag = 0;
+          $error("%s FAILED: result=%0d exp=%0d err=%0d",
+                 tag, r, exp, error_code);
+        end
+      end
     end
+  endtask
 
-    // --- Test R1.5: (-1,0,0)x(0,1,0) -> (0,0,-1) ---
-    push_vectors(-1,0,0, 0,1,0);
-    wait (!out_empty);
-    @(posedge clk) out_rd_en = 1;
-    @(posedge clk) out_rd_en = 0;
-    begin
-      logic signed [COMPONENT_WIDTH-1:0] rx = get_comp(out_data_out,0);
-      logic signed [COMPONENT_WIDTH-1:0] ry = get_comp(out_data_out,1);
-      logic signed [COMPONENT_WIDTH-1:0] rz = get_comp(out_data_out,2);
-      if (rx==0 && ry==0 && rz==-1) begin
-        passed5 = 1;
-        $display("R1.5 PASSED: (%0d,%0d,%0d)", rx, ry, rz);
-      end else $error("R1.5 FAILED: got (%0d,%0d,%0d)", rx, ry, rz);
-    end
-
-    // --- Verificación final R1 ---
-    if (passed2 && passed3 && passed4 && passed5) begin
-      $display("R1 PASSED: Todas las pruebas de producto vectorial fueron correctas.");
-    end else begin
-      $error("R1 FAILED: Alguna prueba de cross product falló.");
-    end
-
-    $finish;
-  end
 
 endmodule

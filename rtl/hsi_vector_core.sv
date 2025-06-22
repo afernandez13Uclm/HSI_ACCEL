@@ -25,11 +25,11 @@ module hsi_vector_core #(
     /**
      * @param COMPONENT_WIDTH Ancho de cada componente H, S o I en bits (por defecto 16)
      * @param FIFO_DEPTH Profundidad de las FIFOs internas (potencia de 2, por defecto 16)
-     * @param COMPONENTS_MAX Máximo número de componentes (bandas) soportadas (por defecto 200)
+     * @param COMPONENTS_MAX Máximo número de componentes (bandas) soportadas (por defecto 3)
      */
     parameter int COMPONENT_WIDTH = 16,
     parameter int FIFO_DEPTH      = 16,
-    parameter int COMPONENTS_MAX  = 200 ///< Máximo número de componentes (bandas) soportadas
+    parameter int COMPONENTS_MAX  = 3 
 )(
     input  logic                                            clk,
     input  logic                                            rst_n,
@@ -92,10 +92,12 @@ module hsi_vector_core #(
     // Estados de la FSM
     typedef enum logic [3:0] {
         IDLE    = 4'd0,
-        READ    = 4'd1,
-        COMPUTE = 4'd2,
-        WRITE   = 4'd3,
-        ERROR   = 4'd4
+        CAPTURE = 4'd1,
+        READ    = 4'd2,
+        COMPUTE = 4'd3,
+        WRITE   = 4'd4,
+        WRITE_DONE = 4'd5,
+        ERROR   = 4'd6
     } state_t;
 
 
@@ -112,12 +114,8 @@ module hsi_vector_core #(
     logic signed [COMPONENT_WIDTH-1:0] vec1 [0:COMPONENTS_MAX-1];
     logic signed [COMPONENT_WIDTH-1:0] vec2 [0:COMPONENTS_MAX-1];
     logic signed [COMPONENT_WIDTH-1:0] result [0:COMPONENTS_MAX-1];
-    logic signed [16*COMPONENT_WIDTH-1:0] dot_result;
 
     integer i;
-
-    // Señales para la salida y flags
-    logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0] result_concat;
 
     // Error codes
     localparam ERR_NONE                 = 4'd0;
@@ -147,6 +145,7 @@ module hsi_vector_core #(
 
             case (state)
                 IDLE: begin
+                    pixel_done <= !out_empty;
                     error_code <= ERR_NONE;
                     if (start) begin
                         if(num_bands > COMPONENTS_MAX) begin
@@ -169,34 +168,39 @@ module hsi_vector_core #(
                         end
                     end
                 end
+                CAPTURE: begin
+                    in1_rd_en <= 1'b0;
+                    in2_rd_en <= 1'b0;
+                end
                 READ: begin
                     for (i = 0; i < num_bands; i = i + 1) begin
-                        vec1[i] <= in1_data_out[i*COMPONENT_WIDTH +: COMPONENT_WIDTH];
-                        vec2[i] <= in2_data_out[i*COMPONENT_WIDTH +: COMPONENT_WIDTH];
+                        vec1[num_bands - 1 - i] <= in1_data_out[(i*COMPONENT_WIDTH) +: COMPONENT_WIDTH];
+                        vec2[num_bands - 1 - i] <= in2_data_out[(i*COMPONENT_WIDTH) +: COMPONENT_WIDTH];
                     end
+                    for (i = 0; i < COMPONENTS_MAX; i = i + 1) result[i] <= 0;
+                    i = 0;
+
                 end
                 COMPUTE: begin
                     if (op_code == OP_CROSS) begin
                         // Producto vectorial solo para 3 bandas
-                        result[0] <= vec1[1]*vec2[2] - vec1[2]*vec2[1];
+                        result[2] <= vec1[1]*vec2[2] - vec1[2]*vec2[1];
                         result[1] <= vec1[2]*vec2[0] - vec1[0]*vec2[2];
-                        result[2] <= vec1[0]*vec2[1] - vec1[1]*vec2[0];
+                        result[0] <= vec1[0]*vec2[1] - vec1[1]*vec2[0];
                     end else if (op_code == OP_DOT) begin
-                        dot_result <= 0;
-                        for (i = 0; i < num_bands; i = i + 1)
-                            dot_result <= dot_result + vec1[i]*vec2[i];
-                        result[0] <= dot_result[COMPONENT_WIDTH-1:0];
-                        for (i = 1; i < COMPONENTS_MAX; i = i + 1) result[i] <= 0;
+                        result[0] <= result[0] + vec1[i]*vec2[i];
+                        i = i + 1;
                     end
                 end
                 WRITE: begin
                     // Concatenar resultado
                     for (i = 0; i < num_bands; i = i + 1) begin
-                        result_concat[i*COMPONENT_WIDTH +: COMPONENT_WIDTH] <= result[i];
+                        out_data_in[i*COMPONENT_WIDTH +: COMPONENT_WIDTH] <= result[i];
                     end
-                    out_data_in <= result_concat;
                     out_wr_en   <= 1'b1;
-                    pixel_done  <= 1'b1;
+                end
+                WRITE_DONE: begin
+                    out_wr_en <= 1'b0;
                 end
                 ERROR: begin
                     // Se mantiene el error hasta nuevo start
@@ -212,11 +216,14 @@ module hsi_vector_core #(
     always_comb begin
         next_state = state;
         case (state)
-            IDLE:    if (start && error_code == ERR_NONE && ((op_code == OP_CROSS && num_bands == 3) || (op_code == OP_DOT && num_bands > 0)) && !in1_empty && !in2_empty && !out_full) next_state = READ;
+            IDLE:    if (start && error_code == ERR_NONE && ((op_code == OP_CROSS && num_bands == 3) || (op_code == OP_DOT && num_bands > 0)) && !in1_empty && !in2_empty && !out_full) next_state = CAPTURE;
                      else if (start && error_code != ERR_NONE) next_state = ERROR;
+            CAPTURE: next_state = READ;
             READ:    next_state = COMPUTE;
-            COMPUTE: next_state = WRITE;
-            WRITE:   next_state = IDLE;
+            COMPUTE: if((op_code == OP_CROSS) || (op_code == OP_DOT && i >= num_bands)) next_state = WRITE;
+            WRITE:   next_state = WRITE_DONE;
+            WRITE_DONE: if(!in1_empty && !in2_empty) next_state = CAPTURE;
+                        else next_state = IDLE;
             ERROR:   if (!start) next_state = IDLE;
             default: next_state = ERROR;
         endcase
