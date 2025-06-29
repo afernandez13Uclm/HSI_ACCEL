@@ -19,6 +19,16 @@
  * Licensed under the MIT License.
  */
 
+
+/**
+ * @class fifo_cache
+ * @brief Módulo FIFO Cache para procesamiento de datos HSI en X-HEEP
+ * @details
+ *  Este módulo implementa una memoria FIFO síncrona con capacidad de escritura y lectura
+ *  controladas, indicadores de lleno/vacío y manejo de punteros con bit de fase.
+ *  Está diseñado para ser utilizado como caché temporal en flujos de procesamiento paralelos,
+ *  como los presentes en aplicaciones HSI (Hyperspectral Imaging).
+*/
 module fifo_cache #(
     /**
      * @param WIDTH Ancho de los datos en bits. Valor por defecto: 16

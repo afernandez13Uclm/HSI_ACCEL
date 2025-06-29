@@ -20,7 +20,11 @@
  */
 
 `include "fifo_cache.sv"
-
+/**
+ * @class hsi_vector_core
+ * @brief Módulo HSI Vector Core para cálculo de cross-product y dot-product entre vectores HSI.
+ * @file hsi_vector_core.sv
+ */
 module hsi_vector_core #(
     /**
      * @param COMPONENT_WIDTH Ancho de cada componente H, S o I en bits (por defecto 16)
@@ -128,7 +132,9 @@ module hsi_vector_core #(
     );
 
     /**
-     * @brief Definición de estados de la FSM
+     * @brief Máquina de estados del núcleo HSI Vector Core.
+     * Esta FSM controla el flujo de lectura de vectores, cálculo del producto (cruz o punto),
+     * escritura de resultados y gestión de errores.
      * 
      * - IDLE: Estado inicial, espera a recibir start.
      * - CAPTURE: Captura datos de entrada.
@@ -137,7 +143,25 @@ module hsi_vector_core #(
      * - WRITE: Prepara el resultado para escribir en la FIFO de salida.
      * - WRITE_DONE: Finaliza la escritura en la FIFO de salida.
      * - ERROR: Maneja errores detectados durante la operación.
+     * \dot
+     * digraph FSM {
+     *   rankdir=LR;
+     *   node [shape=ellipse, style=filled, fillcolor=lightgray];
+     *   IDLE -> CAPTURE     [label="start && valid && !in1_empty && !in2_empty && !out_full"];
+     *   IDLE -> ERROR       [label="start && error_code != ERR_NONE"];
+     *   CAPTURE -> READ;
+     *   READ -> COMPUTE;
+     *   COMPUTE -> WRITE    [label="(OP_CROSS) || (OP_DOT && i >= num_bands)"];
+     *   WRITE -> WRITE_DONE;
+     *   WRITE_DONE -> CAPTURE [label="!in1_empty && !in2_empty"];
+     *   WRITE_DONE -> IDLE    [label="otherwise"];
+     *   ERROR -> IDLE         [label="!start"];
+     *   default -> ERROR;
+     * }
+     * \enddot
      */
+
+
     typedef enum logic [3:0] {
         IDLE    = 4'd0,
         CAPTURE = 4'd1,
