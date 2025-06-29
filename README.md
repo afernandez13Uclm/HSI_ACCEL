@@ -60,7 +60,18 @@ make clean
 ## Functional Requirements Tested
 
 The testbench `hsi_vector_core_tb.sv` verifies:
-- TBD
+ * R1: The core shall correctly compute the vector (cross) product of two signed 3-component vectors.
+ * R1.2: (1,0,0)×(0,1,0) → (0,0,1)
+ * R1.3: (0,0,1)×(1,0,0) → (0,1,0)
+ * R1.4: (1,2,3)×(4,5,6) → (−3,6,−3)
+ * R1.5: Correct handling of negative components: (−1,0,0)×(0,1,0) → (0,0,−1)
+ * R2: The core shall correctly compute the dot (scalar) product of two signed 3-component vectors.
+ * R2.1: (1,0,0)·(0,1,0) = 0
+ * R2.2: (1,2,3)·(4,5,6) = 32
+ * R2.3: (−1,0,0)·(0,1,0) = 0
+ * R3: The core shall correctly handle error conditions:
+ * R3.1: If OP_CROSS is received but num_bands != 3, it shall assert ERR_OP.
+ * R3.2: If num_bands > COMPONENTS_MAX, it shall assert ERR_BANDS.
 
 The testbench `fifo_cache_tb.sv` verifies:
  * R1: After reset, the FIFO must be empty (empty == 1).

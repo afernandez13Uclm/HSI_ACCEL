@@ -9,13 +9,21 @@
  * Copyright (c) 2025 Alejandro Fernández Rodríguez
  *
  * -------------------------------------------------------------------------
- * Functional Requirements:
+ * Requisitos funcionales:
  * R1: El core debe calcular correctamente el producto vectorial de dos 
  *      vectores de 3 componentes con signo.
  * R1.2: (1,0,0)x(0,1,0) -> (0,0,1)
  * R1.3: (0,0,1)x(1,0,0) -> (0,1,0)
  * R1.4: (1,2,3)x(4,5,6) -> (-3,6,-3)
  * R1.5: Componentes negativas correctamente: (-1,0,0)x(0,1,0) -> (0,0,-1)
+ * R2: El core debe calcular correctamente el producto punto de dos 
+ *      vectores de 3 componentes con signo.
+ * R2.1: (1,0,0)·(0,1,0) = 0
+ * R2.2: (1,2,3)·(4,5,6) = 32
+ * R2.3: (-1,0,0)·(0,1,0) = 0
+ * R3: El core debe gestionar correctamente los errores:
+ * R3.1: Si se recibe un código de operación OP_CROSS pero num_bands != 3, debe generar ERR_OP.
+ * R3.2: Si num_bands > COMPONENTS_MAX, debe generar ERR_BANDS.
  * -------------------------------------------------------------------------
  */
 `timescale 1ns/1ps
