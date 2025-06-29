@@ -2,21 +2,49 @@
 # Doxygen config file para SystemVerilog con comentarios tipo Doxygen
 #-----------------------------------------------------------------------------
 
+# Project
 PROJECT_NAME           = "HSI RTL Modules"
 PROJECT_BRIEF          = "Documentación automática de módulos RTL para procesamiento HSI"
 OUTPUT_DIRECTORY       = doc
+
+# Input
 INPUT                  = rtl tb
 RECURSIVE              = YES
 
-FILE_PATTERNS          = *.sv
+# File patterns y asociaciones
+FILE_PATTERNS          = *.sv *.v
 EXTENSION_MAPPING      = sv=C
 
+# Extracción
 EXTRACT_ALL            = YES
 MARKDOWN_SUPPORT       = YES
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = YES
 
+# Salidas
 GENERATE_LATEX         = NO
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 QUIET                  = YES
+
+#-----------------------------------------------------------------------------
+# Graphviz 
+#-----------------------------------------------------------------------------
+
+# Activar uso de dot (Graphviz)
+HAVE_DOT               = YES
+
+# Formato de imagen para los grafos
+DOT_IMAGE_FORMAT       = svg
+
+# Directorio(s) donde escribir los .dot intermedios (puede ser el mismo OUTPUT_DIRECTORY)
+DOTFILE_DIRS           = .
+
+# Máximo núm. de nodos antes de truncar
+DOT_GRAPH_MAX_NODES    = 100
+
+# Permitir múltiples llamadas a dot en un mismo diagrama
+DOT_MULTI_TARGETS      = YES
+
+# Limpia archivos .dot intermedios tras generar los SVG/PNG
+DOT_CLEANUP            = YES

@@ -34,54 +34,92 @@ module hsi_vector_core #(
     input  logic                                            clk,
     input  logic                                            rst_n,
 
-    // Interfaz FIFO de entrada 1
+    /**
+     * @brief Interfaz FIFO de entrada 1
+     * Esta FIFO recibe vectores HSI de entrada para el cálculo.
+     * Cada vector tiene un ancho de `COMPONENT_WIDTH * COMPONENTS_MAX` bits.
+     * - `in1_wr_en`: habilitación de escritura en la FIFO de entrada 1
+     * - `in1_data_in`: datos de entrada (vector HSI) a escribir
+     * - `in1_full`: indicador de FIFO llena
+     */
     input  logic                                            in1_wr_en,
     input  logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0]       in1_data_in,
     output logic                                            in1_full,
 
-    // Interfaz FIFO de entrada 2
+    /**
+     * @brief Interfaz FIFO de entrada 2
+     * Esta FIFO recibe vectores HSI de entrada para el cálculo.
+     * Cada vector tiene un ancho de `COMPONENT_WIDTH * COMPONENTS_MAX` bits.
+     * - `in2_wr_en`: habilitación de escritura en la FIFO de entrada 1
+     * - `in2_data_in`: datos de entrada (vector HSI) a escribir
+     * - `in2_full`: indicador de FIFO llena
+     */
     input  logic                                            in2_wr_en,
     input  logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0]       in2_data_in,
     output logic                                            in2_full,
 
-    // Interfaz FIFO de salida
+    /**
+     * @brief Interfaz FIFO de salida
+     * Esta FIFO almacena los resultados del cálculo de vectores.
+     * Cada vector tiene un ancho de `COMPONENT_WIDTH * COMPONENTS_MAX` bits.
+     * - `out_rd_en`: habilitación de lectura de la FIFO de salida
+     * - `out_data_out`: datos de salida (vector HSI resultado) leídos
+     * - `out_empty`: indicador de FIFO vacía
+     * - `out_full`: indicador de FIFO llena
+     */
     input  logic                                            out_rd_en,
     output logic                                            out_empty,
     output logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0]       out_data_out,
     output logic                                            out_full,
 
-    // Operación y control
+    /**
+     * @brief Señales de control y configuración
+     * - `op_code`: código de operación para seleccionar el tipo de cálculo (cross-product o dot-product)
+     * - `num_bands`: número de bandas/componentes a procesar (1..32)
+     * - `start`: señal para iniciar la operación
+     */
     input  logic [3:0]                                      op_code,        ///< Código de operación
     input  logic [31:0]                                     num_bands,      ///< Número de bandas/componentes (1..32)
     input  logic                                            start,          ///< Señal para iniciar operación
 
-    // Señales de estado y error
+    /**
+     * @brief Señales de salida
+     * - `pixel_done`: indicador de que el pixel ha sido procesado y escrito
+     * - `error_code`: código de error (0 = OK, otros = error)
+     */
     output logic                                            pixel_done,     ///< Indica pixel procesado y escrito
     output logic [3:0]                                      error_code      ///< 0 = OK, otros = error
 );
 
-    /// Señales internas para control de lectura/escritura de las FIFOs
+    /**
+     * @brief Señales internas de control de FIFOs
+     * - `in1_rd_en`: habilitación de lectura de la FIFO de entrada 1
+     * - `in2_rd_en`: habilitación de lectura de la FIFO de entrada 2
+     * - `out_wr_en`: habilitación de escritura en la FIFO de salida
+     * - `in1_data_out`, `in2_data_out`, `out_data_in`: datos leídos/escritos en las FIFOs
+     * - `in1_empty`, `in2_empty`: indicadores de FIFO vacía para entradas
+     */
     logic                                           in1_rd_en, in2_rd_en, out_wr_en;
     logic [COMPONENT_WIDTH*COMPONENTS_MAX-1:0]      in1_data_out, in2_data_out, out_data_in;
     logic                                           in1_empty, in2_empty;
 
-    // Instanciación de FIFO de entrada 1 (ancho dinámico según num_bands, pero tamaño fijo máximo)
+    /**
+     * @brief FIFO de entrada 1, FIFO de entrada 2 y FIFO de salida
+     * Estas FIFOs almacenan los vectores HSI de entrada y salida.
+     * Utilizan el módulo `fifo_cache` genérico para manejar la lógica de lectura/escritura.
+     */
     fifo_cache #(.WIDTH(COMPONENT_WIDTH*COMPONENTS_MAX), .DEPTH(FIFO_DEPTH)) fifo_in1 (
         .clk(clk), .rst_n(rst_n),
         .wr_en(in1_wr_en), .rd_en(in1_rd_en),
         .data_in(in1_data_in), .data_out(in1_data_out),
         .full(in1_full), .empty(in1_empty)
     );
-
-    // Instanciación de FIFO de entrada 2
     fifo_cache #(.WIDTH(COMPONENT_WIDTH*COMPONENTS_MAX), .DEPTH(FIFO_DEPTH)) fifo_in2 (
         .clk(clk), .rst_n(rst_n),
         .wr_en(in2_wr_en), .rd_en(in2_rd_en),
         .data_in(in2_data_in), .data_out(in2_data_out),
         .full(in2_full), .empty(in2_empty)
     );
-
-    // Instanciación de FIFO de salida
     fifo_cache #(.WIDTH(COMPONENT_WIDTH*COMPONENTS_MAX), .DEPTH(FIFO_DEPTH)) fifo_out (
         .clk(clk), .rst_n(rst_n),
         .wr_en(out_wr_en), .rd_en(out_rd_en),
@@ -89,7 +127,17 @@ module hsi_vector_core #(
         .full(out_full), .empty(out_empty)
     );
 
-    // Estados de la FSM
+    /**
+     * @brief Definición de estados de la FSM
+     * 
+     * - IDLE: Estado inicial, espera a recibir start.
+     * - CAPTURE: Captura datos de entrada.
+     * - READ: Lee los vectores de las FIFOs de entrada.
+     * - COMPUTE: Realiza el cálculo del producto vectorial o punto.
+     * - WRITE: Prepara el resultado para escribir en la FIFO de salida.
+     * - WRITE_DONE: Finaliza la escritura en la FIFO de salida.
+     * - ERROR: Maneja errores detectados durante la operación.
+     */
     typedef enum logic [3:0] {
         IDLE    = 4'd0,
         CAPTURE = 4'd1,
@@ -100,32 +148,55 @@ module hsi_vector_core #(
         ERROR   = 4'd6
     } state_t;
 
+    /**
+     * @brief Códigos de operación
+     * 
+     * - OP_CROSS: Producto vectorial (cross-product) para 3 bandas.
+     * - OP_DOT: Producto punto (dot-product) para cualquier número de bandas.
+     */
+    typedef enum logic [3:0] {
+        OP_CROSS = 4'd0, ///< Producto vectorial (cross-product)
+        OP_DOT   = 4'd1  ///< Producto punto (dot-product)
+    } op_code_t;
 
-    // Códigos de operación
-    // OP_CROSS: Producto vectorial (cross-product) para 3 bandas
-    // OP_DOT: Producto punto (dot-product) para cualquier número de bandas
-
-    localparam OP_CROSS                     = 4'd1;
-    localparam OP_DOT                       = 4'd2;
-
+    /**
+     * @brief Variables internas de la FSM
+     * 
+     * - `state`: Estado actual de la FSM.
+     * - `next_state`: Estado siguiente a transitar.
+     * - `vec1`, `vec2`, `result`: Vectores internos para almacenar los componentes de entrada y el resultado.
+     * - `i`: Contador para iterar sobre las bandas.
+     */
     state_t state, next_state;
-
-    // Vectores internos de componentes (máximo COMPONENTS_MAX bandas)
     logic signed [COMPONENT_WIDTH-1:0] vec1 [0:COMPONENTS_MAX-1];
     logic signed [COMPONENT_WIDTH-1:0] vec2 [0:COMPONENTS_MAX-1];
     logic signed [COMPONENT_WIDTH-1:0] result [0:COMPONENTS_MAX-1];
-
     integer i;
 
-    // Error codes
-    localparam ERR_NONE                 = 4'd0;
-    localparam ERR_OP                   = 4'd1;
-    localparam ERR_INPUT_FIFO_EMPTY     = 4'd2;
-    localparam ERR_OUTPUT_FIFO_FULL     = 4'd3;
-    localparam ERR_BANDS                = 4'd4;
-    localparam ERR_INVALID_FSM          = 4'd4;
+    /**
+     * @brief Código de error
+     * 
+     * - ERR_NONE: No hay error.
+     * - ERR_OP: Error en el código de operación (por ejemplo, OP_CROSS con num_bands != 3).
+     * - ERR_INPUT_FIFO_EMPTY: FIFO de entrada vacía al intentar leer.
+     * - ERR_OUTPUT_FIFO_FULL: FIFO de salida llena al intentar escribir.
+     * - ERR_BANDS: Número de bandas no válido (mayor que COMPONENTS_MAX).
+     * - ERR_INVALID_FSM: Estado desconocido en la FSM.
+     */
+    typedef enum logic [3:0] {
+        ERR_NONE                 = 4'd0, ///< No hay error
+        ERR_OP                   = 4'd1, ///< Error en el código de operación
+        ERR_INPUT_FIFO_EMPTY     = 4'd2, ///< FIFO de entrada vacía
+        ERR_OUTPUT_FIFO_FULL     = 4'd3, ///< FIFO de salida llena
+        ERR_BANDS                = 4'd4, ///< Número de bandas no válido
+        ERR_INVALID_FSM          = 4'd5  ///< Estado desconocido en la FSM
+    } error_code_t;
 
-    // Secuencial principal
+    /**
+     * @brief Variable para almacenar el código de error actual
+     * 
+     * Se inicializa a ERR_NONE y se actualiza según las condiciones de error detectadas.
+     */
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state      <= IDLE;
@@ -205,8 +276,12 @@ module hsi_vector_core #(
             endcase
         end
     end
-
-    // FSM combinacional
+    /**
+     * @brief Lógica combinacional para determinar el siguiente estado de la FSM
+     * 
+     * La lógica evalúa el estado actual y las señales de control para decidir el siguiente estado.
+     * Se asegura de que se transite correctamente entre los estados según las condiciones del sistema.
+     */
     always_comb begin
         next_state = state;
         case (state)
@@ -224,3 +299,4 @@ module hsi_vector_core #(
     end
 
 endmodule
+
