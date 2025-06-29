@@ -141,7 +141,6 @@ module hsi_vector_core #(
             case (state)
                 IDLE: begin
                     pixel_done <= !out_empty;
-                    error_code <= ERR_NONE;
                     if (start) begin
                         if(num_bands > COMPONENTS_MAX) begin
                             error_code <= ERR_BANDS;
