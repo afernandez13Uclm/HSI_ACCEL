@@ -295,8 +295,8 @@ module hsi_vector_core_tb;
         if (!pixel_done)
           $error("%s FAILED: pixel_done no activo.", tag);
 
-        // extraer resultado (solo componente 0)
-        r = get_comp(out_data_out, 0);
+        // extraer resultado (solo componente 2)
+        r = get_comp(out_data_out, 2);
 
         if (r == exp[COMPONENT_WIDTH-1:0] && error_code==ERR_NONE) begin
           flag = 1;
