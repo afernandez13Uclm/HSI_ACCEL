@@ -135,11 +135,6 @@ module hsi_vector_core #(
             pixel_done <= 1'b0;
             error_code <= ERR_NONE;
         end else begin
-            in1_rd_en  <= 1'b0;
-            in2_rd_en  <= 1'b0;
-            out_wr_en  <= 1'b0;
-            pixel_done <= 1'b0;
-            error_code <= ERR_NONE;
 
             state <= next_state;
 
