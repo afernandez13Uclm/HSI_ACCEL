@@ -208,6 +208,9 @@ module hsi_vector_core_tb;
       @(posedge clk);
       op_code   = OP_CROSS;
       num_bands = 2;     // configuración ilegal
+      start      = 1; // iniciar operación
+      @(posedge clk);
+      start      = 0; // finalizar operación
       @(posedge clk);
       if (error_code == ERR_OP) begin
           passed_err1 = 1;
@@ -218,6 +221,9 @@ module hsi_vector_core_tb;
       @(posedge clk);
       op_code   = OP_DOT;
       num_bands = COMPONENTS_MAX + 1;
+      start      = 1; // iniciar operación
+      @(posedge clk);
+      start      = 0; // finalizar operación
       @(posedge clk);
       if (error_code == ERR_BANDS) begin
           passed_err2 = 1;
