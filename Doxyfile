@@ -8,12 +8,14 @@ PROJECT_BRIEF          = "Documentación automática de módulos RTL para proces
 OUTPUT_DIRECTORY       = doc
 
 # Input
-INPUT                  = rtl tb
+INPUT                  = rtl
 RECURSIVE              = YES
 
 # File patterns y asociaciones
 FILE_PATTERNS          = *.sv *.v
-EXTENSION_MAPPING      = sv=C
+EXTENSION_MAPPING      = sv=C++
+INPUT_FILTER           = "./sv_filter.sh"
+
 
 # Extracción
 EXTRACT_ALL            = YES
