@@ -5,9 +5,11 @@ VFLAGS           = $(INCLUDE_DIRS) -Wall --trace -Wno-WIDTHTRUNC --timing --cove
 
 TOP_MODULE_FIFO  = fifo_cache_tb
 TOP_MODULE_ALU   = hsi_vector_core_tb
+TOP_MODULE_WRAPPER = hsi_vector_core_wrapper_tb
 
 SRC_FIFO         = tb/fifo_cache_tb.sv rtl/fifo_cache.sv
 SRC_ALU          = tb/hsi_vector_core_tb.sv rtl/hsi_vector_core.sv 
+SRC_WRAPPER = tb/hsi_vector_core_wrapper_tb.sv rtl/hsi_vector_core_wrapper.sv
 SRC_CPP          = sim/sim_main.cpp
 
 BUILD_DIR        = build/
@@ -22,6 +24,7 @@ help:
 	@echo "Targets disponibles:"
 	@echo "  fifo_cache     Compila y simula el testbench del módulo fifo_cache"
 	@echo "  hsi_core       Compila y simula el testbench del módulo hsi_vector_core"
+	@echo "  hsi_wrapper    Compila y simula el wrapper de hsi_vector_core (con interfaz OBI)"
 	@echo "  coverage       Genera informe HTML con la cobertura funcional (genhtml)"
 	@echo "  diagram        Genera diagrama RTL del módulo fifo_cache (SVG en diagrams/)"
 	@echo "  doc            Genera documentación HTML con Doxygen en doc/html/"
@@ -48,6 +51,15 @@ hsi_core:
 		-Mdir $(BUILD_DIR)
 	cd $(BUILD_DIR) && make -f V$(TOP_MODULE_ALU).mk
 	cd $(BUILD_DIR) && ./V$(TOP_MODULE_ALU)
+hsi_wrapper:
+	$(VERILATOR) $(VFLAGS) --cc --exe \
+		$(SRC_WRAPPER) $(SRC_CPP) \
+		-CFLAGS "-DVL_MODULE=\\\"V$(TOP_MODULE_WRAPPER).h\\\" -DVL_TOP_TYPE=V$(TOP_MODULE_WRAPPER)" \
+		--top-module $(TOP_MODULE_WRAPPER) \
+		-Mdir $(BUILD_DIR)
+	cd $(BUILD_DIR) && make -f V$(TOP_MODULE_WRAPPER).mk
+	cd $(BUILD_DIR) && ./V$(TOP_MODULE_WRAPPER)
+
 
 coverage:
 	verilator_coverage --write-info $(BUILD_DIR)/coverage.info $(BUILD_DIR)/coverage.dat
@@ -66,4 +78,4 @@ doc:
 clean:
 	rm -rf $(BUILD_DIR) $(COVERAGE_DIR) $(DIAGRAM_DIR) doc *.vcd *.o *.d *.vvp *.log 
 
-.PHONY: all fifo_cache hsi_core coverage diagram doc clean help
+.PHONY: all fifo_cache hsi_core hsi_wrapper coverage diagram doc clean help

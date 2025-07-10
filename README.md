@@ -7,14 +7,16 @@ HSI_ACCEL is a SystemVerilog-based hardware accelerator designed to compute the 
 ```
 HSI_ACCEL/
 ├── rtl/
-│   ├── fifo_cache.sv           # Reusable FIFO module
-│   └── hsi_vector_core.sv      # HSI core
+│   ├── fifo_cache.sv               # Reusable FIFO module
+│   ├── hsi_vector_core.sv          # HSI core
+│   └── hsi_vector_core_wrapper.sv  # Wrapper with OBI-like interface for control
 ├── tb/
-│   ├── fifo_cache_tb.sv        # FIFO module testbench
-│   └── hsi_vector_core_tb.sv   # HSI core testbench
+│   ├── fifo_cache_tb.sv            # FIFO module testbench
+│   ├── hsi_vector_core_tb.sv       # HSI core testbench
+│   └── hsi_vector_core_wrapper_tb.sv # Testbench for wrapper module
 ├── sim/
-│   └── sim_main.cpp            # Verilator simulation driver (C++)
-├── Makefile                    # Build and simulation automation
+│   └── sim_main.cpp                # Verilator simulation driver (C++)
+├── Makefile                        # Build and simulation automation
 ```
 
 ## Requirements
@@ -33,6 +35,7 @@ This project uses Verilator along with C++ testbench drivers to simulate the RTL
 ```bash
 make hsi_core     # Build and simulate hsi_vector_core_tb
 make fifo_cache   # Build and simulate fifo_cache_tb
+make hsi_wrapper  # Build and simulate hsi_vector_core_wrapper_tb
 ```
 
 This will generate:
@@ -84,6 +87,13 @@ The testbench `fifo_cache_tb.sv` verifies:
  * R8: Data integrity: data_out must match the sequence that was written.
  * R9: Back-to-back write and read operations must execute consecutively without errors.
  * R10: Robust behavior under random operation sequences, with no protocol violations.
+
+The testbench `hsi_vector_core_wrapper_tb.sv` verifies:
+ * R1: Wrapper interprets start/op_code/pixel_size register writes correctly.
+ * R2: Read operations return busy status, valid result and pixel_done correctly.
+ * R3: Data written to `hsi_vector_core` triggers the expected behavior.
+ * R4: Output result register reflects the result from the core.
+ * R5: Wrapper issues single-cycle start pulse on valid control write.
 
 ## Notes
 

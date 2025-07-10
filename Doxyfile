@@ -8,11 +8,11 @@ PROJECT_BRIEF          = "Documentación automática de módulos RTL para proces
 OUTPUT_DIRECTORY       = doc
 
 # Input
-INPUT                  = rtl
+INPUT                  = rtl sim .
 RECURSIVE              = YES
 
 # File patterns y asociaciones
-FILE_PATTERNS          = *.sv *.v
+FILE_PATTERNS          = *.sv *.v *cpp *md
 EXTENSION_MAPPING      = sv=C++
 INPUT_FILTER           = "./sv_filter.sh"
 
