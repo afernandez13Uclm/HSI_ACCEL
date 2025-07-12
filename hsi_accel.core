@@ -1,0 +1,41 @@
+# ==============================================================================
+# @file hsi_accel.core
+# @brief Descripción del core FuseSoC para el acelerador HSI.
+#
+# @details
+# Este archivo define el módulo `hsi_accel` como un core FuseSoC, indicando
+# los archivos RTL necesarios para su integración como periférico esclavo OBI 
+# dentro del sistema X-HEEP. Se incluyen los componentes del wrapper OBI, 
+# núcleo vectorial HSI y la caché FIFO interna.
+#
+# @author
+# Alejandro Fernández Rodríguez, UCLM
+#
+# @version 1.0
+# @date 2025
+#
+# @copyright
+# Copyright (c) 2025 Alejandro Fernández Rodríguez
+# Licensed under the MIT License.
+# ==============================================================================
+
+CAPI=2:
+
+name: uclm:hsi:hsi_accel:1.0.0
+
+description: >
+  Acelerador vectorial para imágenes hiperespectrales (HSI) con interfaz OBI compatible con X-HEEP.
+
+filesets:
+  rtl:
+    files:
+      - hw/rtl/hsi_accel_obi.sv
+      - hw/rtl/hsi_vector_core_wrapper.sv
+      - hw/rtl/hsi_vector_core.sv
+      - hw/rtl/fifo_cache.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - rtl
