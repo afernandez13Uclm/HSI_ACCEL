@@ -1,0 +1,44 @@
+/*
+ * @file hsi_accel.vendor.hjson
+ * @brief Archivo de integración del acelerador HSI con X-HEEP mediante el sistema Vendor de OpenTitan.
+ *
+ * @details
+ * Este archivo permite importar el repositorio HSI_ACCEL como módulo externo en el ecosistema X-HEEP.
+ * Define la ubicación del repositorio, los archivos RTL relevantes y los targets de FuseSoC necesarios
+ * para la integración del acelerador vectorial para procesamiento HSI. La estructura sigue el modelo
+ * empleado en el ejemplo simple_cnt.
+ *
+ * @author
+ * Alejandro Fernández Rodríguez, UCLM
+ *
+ * @version 1.0
+ * @date 2025
+ *
+ * @copyright
+ * Copyright (c) 2025 Alejandro Fernández Rodríguez
+ * Licensed under the MIT License.
+ */
+
+{
+  "name": "hsi_accel",
+  "upstream": "https://github.com/afernandez13Uclm/HSI_ACCEL",
+  "commit": "latest",
+  "files": [
+    "hw/rtl/hsi_accel_obi.sv",
+    "hw/rtl/hsi_vector_core_wrapper.sv",
+    "hw/rtl/hsi_vector_core.sv",
+    "hw/rtl/fifo_cache.sv"
+  ],
+  "targets": [
+    {
+      "name": "rtl",
+      "files": [
+        "hw/rtl/hsi_accel_obi.sv",
+        "hw/rtl/hsi_vector_core_wrapper.sv",
+        "hw/rtl/hsi_vector_core.sv",
+        "hw/rtl/fifo_cache.sv"
+      ],
+      "type": "systemVerilogSource"
+    }
+  ]
+}
