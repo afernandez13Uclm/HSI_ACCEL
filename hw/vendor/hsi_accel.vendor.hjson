@@ -21,8 +21,13 @@
 
 {
   "name": "hsi_accel",
-  "upstream": "https://github.com/afernandez13Uclm/HSI_ACCEL",
+  "upstream": {
+    "type": "git",
+    "url": "https://github.com/afernandez13Uclm/HSI_ACCEL",
+    "rev": "main"
+  },
   "commit": "latest",
+  "target_dir": "hsi_accel",
   "files": [
     "hw/rtl/hsi_accel_obi.sv",
     "hw/rtl/hsi_vector_core_wrapper.sv",
