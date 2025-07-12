@@ -1,30 +1,12 @@
-# ==============================================================================
-# @file hsi_accel.core
-# @brief Descripción del core FuseSoC para el acelerador HSI.
-#
-# @details
-# Este archivo define el módulo `hsi_accel` como un core FuseSoC, indicando
-# los archivos RTL necesarios para su integración como periférico esclavo OBI 
-# dentro del sistema X-HEEP. Se incluyen los componentes del wrapper OBI, 
-# núcleo vectorial HSI y la caché FIFO interna.
-#
-# @author
-# Alejandro Fernández Rodríguez, UCLM
-#
-# @version 1.0
-# @date 2025
-#
-# @copyright
-# Copyright (c) 2025 Alejandro Fernández Rodríguez
-# Licensed under the MIT License.
-# ==============================================================================
-
 CAPI=2:
+# Copyright 2025 Alejandro Fernández Rodríguez
+# Licensed under the MIT License.
+#
+# File: hsi_accel.core
+# Description: Core description for HSI vector processing accelerator
 
 name: uclm:hsi:hsi_accel:1.0.0
-
-description: >
-  Acelerador vectorial para imágenes hiperespectrales (HSI) con interfaz OBI compatible con X-HEEP.
+description: Hardware accelerator for HSI vector operations with OBI interface
 
 filesets:
   rtl:
@@ -35,7 +17,96 @@ filesets:
       - hw/rtl/fifo_cache.sv
     file_type: systemVerilogSource
 
+  verilator-tb:
+    files:
+      - tb/hsi_vector_core_tb.sv
+      - tb/hsi_vector_core_wrapper_tb.sv
+      - sim/sim_main.cpp
+    file_type: systemVerilogSource
+
+scripts:
+  prepare_dirs:
+    cmd: [mkdir, -p, "../../sim-common"]
+
+  copy_waves:
+    cmd: [cp, "logs/waves.fst", "../../sim-common/"]
+
 targets:
-  default:
+  default: &default
     filesets:
       - rtl
+    toplevel: hsi_accel_obi
+
+  sim:
+    <<: *default
+    description: Simulate the HSI accelerator
+    default_tool: verilator
+    toplevel:
+      - tool_verilator ? (hsi_vector_core_wrapper_tb)
+      - !tool_verilator ? (hsi_accel_obi)
+    filesets_append:
+      - verilator-tb
+    flags:
+      rtl_vendor: false
+    hooks:
+      pre_run:
+        - prepare_dirs
+      post_run:
+        - copy_waves
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+          - "--cc"
+          - "--assert"
+          - "--trace"
+          - "--trace-fst"
+          - "--trace-structs"
+          - "--trace-max-array 128"
+          - "--x-assign unique"
+          - "--x-initial unique"
+          - "--exe"
+          - "sim_main.cpp"
+          - "-Wall"
+          - "-Wpedantic"
+
+  format:
+    filesets:
+      - rtl
+    description: Format RTL sources with Verible
+    default_tool: veribleformat
+    toplevel: hsi_accel_obi
+    tools:
+      veribleformat:
+        verible_format_args:
+          - "--assignment_statement_alignment=align"
+          - "--named_port_alignment=align"
+          - "--named_port_indentation=indent"
+          - "--inplace"
+
+  lint:
+    filesets:
+      - rtl
+    description: Static lint using Verible
+    default_tool: veriblelint
+    toplevel: hsi_accel_obi
+    tools:
+      veriblelint:
+        ruleset: default
+        verible_lint_args:
+          - "--waiver_files=../../../hw/misc/verible-lint.waiver"
+        rules:
+          - "line-length=length:120"
+
+parameters:
+  AW:
+    datatype: int
+    description: Address width
+    default: 32
+    paramtype: vlogparam
+
+  DW:
+    datatype: int
+    description: Data width
+    default: 32
+    paramtype: vlogparam
