@@ -1,15 +1,19 @@
 # HSI_ACCEL - Hardware Accelerator for HSI Vector Processing
 
-HSI_ACCEL is a SystemVerilog-based hardware accelerator designed to compute the pixels of HSI (Hue, Saturation, Intensity) vectors efficiently. The architecture includes a modular and configurable elements for HSI processing, fully testable via Verilator simulation.
+HSI_ACCEL is a SystemVerilog-based hardware accelerator designed to compute the pixels of HSI hyperspectral image vectors efficiently. The architecture includes a modular and configurable elements for HSI processing, fully testable via Verilator simulation.
 
 ## Project Structure
 
 ```
 HSI_ACCEL/
-├── rtl/
-│   ├── fifo_cache.sv               # Reusable FIFO module
-│   ├── hsi_vector_core.sv          # HSI core
-│   └── hsi_vector_core_wrapper.sv  # Wrapper with OBI-like interface for control
+├── hw/
+|   ├── rtl/
+│   |    ├── fifo_cache.sv               # Reusable FIFO module
+│   |    ├── hsi_vector_core.sv          # HSI core
+│   |    └── hsi_vector_core_wrapper.sv  # Wrapper with OBI-like interface for control
+│   |    └── hsi_accel_obi.sv            # Top file with the links between hsi_vector_core and hsi_vector_core_wrapper
+|   ├── vendor/
+│   |    └── hsi_accel.vendor.hjson      # file to automate the integration with x-heep (GR-heep version)
 ├── tb/
 │   ├── fifo_cache_tb.sv            # FIFO module testbench
 │   ├── hsi_vector_core_tb.sv       # HSI core testbench
@@ -17,6 +21,7 @@ HSI_ACCEL/
 ├── sim/
 │   └── sim_main.cpp                # Verilator simulation driver (C++)
 ├── Makefile                        # Build and simulation automation
+├── hsi_accel.core                  # Package core file for x-heep integration
 ```
 
 ## Requirements
