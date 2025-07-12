@@ -101,6 +101,27 @@ The testbench `hsi_vector_core_wrapper_tb.sv` verifies:
 - The design is compatible with SystemVerilog synthesis and simulation tools.
 - `sim_main.cpp` uses `VL_MODULE` and `VL_TOP_TYPE` macros for flexible testbench binding.
 
+
+## Integration with GR-HEEP (X-HEEP Extension)
+
+This project can be integrated into the [GR-HEEP](https://github.com/davidmallasen/GR-HEEP) platform, which extends X-HEEP with native support for external accelerators through XAIF and the OpenTitan Vendor system.
+
+### Steps to integrate `HSI_ACCEL`:
+
+1. **Clone GR-HEEP and switch to the `connect-bus` branch:**
+
+   ```bash
+   git clone https://github.com/davidmallasen/GR-HEEP.git
+   cd GR-HEEP
+   git checkout connect-bus
+
+2. **Copy the file hw/vendor/hsi_accel.vendor.hjson into the folder GR-HEEP/hw/vendor**
+
+3. **Inlcude the HSI_ACCEL repo into the project**
+    ```bash
+    make vendor-update MODULE_NAME=hsi_accel
+
+
 ## License
 
 This project is released under the MIT License.
