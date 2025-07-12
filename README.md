@@ -185,7 +185,9 @@ This project can be integrated into the [GR-HEEP](https://github.com/davidmallas
         .rvalid_o  (gr_heep_slave_resp_o[0].rvalid)
     );
     endmodule
-
+6. **Compile project HW modules again**
+    ```bash
+    make gr-heep-gen-force
 
 
 ## License
