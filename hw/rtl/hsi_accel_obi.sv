@@ -1,5 +1,3 @@
-`include "hsi_vector_core_wrapper.sv"
-`include "hsi_vector_core.sv"
 module hsi_accel_obi #(
   parameter int unsigned AW = 32,
   parameter int unsigned DW = 32
@@ -45,16 +43,31 @@ module hsi_accel_obi #(
   );
 
   // Instancia del core de procesamiento HSI
-  hsi_vector_core u_core (
-    .clk_i(clk_i),
-    .rst_ni(rst_ni),
-    .start_i(start),
-    .op_code_i(op_code),
-    .pixel_size_i(pixel_size),
-    .result_o(result),
-    .valid_result_o(valid_result),
-    .pixel_done_o(pixel_done),
-    .busy_o(busy)
+    hsi_vector_core u_core (
+    .clk(clk_i),
+    .rst_n(rst_ni),
+    .start(start),
+    .op_code(op_code),
+    .num_bands(pixel_size),
+
+    // Entradas de datos dummy
+    .in1_wr_en(1'b0),
+    .in1_data_in(16'b0),
+    .in1_full(),
+
+    .in2_wr_en(1'b0),
+    .in2_data_in(16'b0),
+    .in2_full(),
+
+    .out_rd_en(1'b0),
+    .out_empty(),
+    .out_data_out(),
+    .out_full(),
+
+    .pixel_done(pixel_done),
+    .valid(valid_result),
+    .result(result),
+    .error_code()
   );
 
 endmodule

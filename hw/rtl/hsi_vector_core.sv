@@ -19,7 +19,6 @@
  * Licensed under the MIT License.
  */
 
-`include "fifo_cache.sv"
 /**
  * @class hsi_vector_core
  * @brief Módulo HSI Vector Core para cálculo vectorial entre vectores HSI.

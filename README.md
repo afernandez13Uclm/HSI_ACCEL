@@ -111,7 +111,7 @@ The testbench `hsi_vector_core_wrapper_tb.sv` verifies:
 
 This project can be integrated into the [GR-HEEP](https://github.com/davidmallasen/GR-HEEP) platform, which extends X-HEEP with native support for external accelerators through XAIF and the OpenTitan Vendor system.
 
-## Notes
+### Notes
 
 This project is only fully tested with the GR-HEEP project into the branch connect-bus with the toolchain COREV.
 To dowload the toolchain you can follow the next intructions:
@@ -204,13 +204,18 @@ To dowload the toolchain you can follow the next intructions:
         .rvalid_o  (gr_heep_slave_resp_o[0].rvalid)
     );
     endmodule
-6. **Compile project HW modules again**
+
+6. **add de dependence to file "peripherals.core"**
+    ```bash
+    - uclm:hsi:hsi_accel:1.0.0
+
+7. **Compile project HW modules again**
     ```bash
     make gr-heep-gen-force
 
-7. **Compile the example project to verify the installation (replace the architecture with the desired)**
+8. **Compile the example project to verify the installation (replace the architecture and compiler with the desired)**
     ```bash
-    make app PROJECT=example
+    make app PROJECT=example COMPILER_PREFIX=riscv32-corev- ARCH=rv32imfc_zicsr
     make verilator-sim
 
 
