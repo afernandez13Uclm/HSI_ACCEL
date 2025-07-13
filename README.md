@@ -114,7 +114,8 @@ This project can be integrated into the [GR-HEEP](https://github.com/davidmallas
 ## Notes
 
 This project is only fully tested with the GR-HEEP project into the branch connect-bus with the toolchain COREV.
-To dowload the toolchain you can follow the next intructions
+To dowload the toolchain you can follow the next intructions:
+
     ```bash
     wget https://buildbot.embecosm.com/job/corev-gcc-ubuntu2204/47/artifact/\
         corev-openhw-gcc-ubuntu2204-20240530.tar.gz
