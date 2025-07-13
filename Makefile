@@ -8,7 +8,7 @@ TOP_MODULE_ALU   = hsi_vector_core_tb
 TOP_MODULE_WRAPPER = hsi_vector_core_wrapper_tb
 
 SRC_FIFO         = tb/fifo_cache_tb.sv hw/rtl/fifo_cache.sv
-SRC_ALU          = tb/hsi_vector_core_tb.sv hw/rtl/hsi_vector_core.sv 
+SRC_ALU          = tb/hsi_vector_core_tb.sv hw/rtl/hsi_vector_core.sv  hw/rtl/fifo_cache.sv
 SRC_WRAPPER = tb/hsi_vector_core_wrapper_tb.sv hw/rtl/hsi_vector_core_wrapper.sv
 SRC_CPP          = sim/sim_main.cpp
 
