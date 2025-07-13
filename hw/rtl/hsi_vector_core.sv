@@ -236,8 +236,8 @@ module hsi_vector_core #(
      * - OP_DOT: Producto punto (dot-product) para cualquier número de bandas.
      */
     typedef enum logic [3:0] {
-        OP_CROSS = 4'd0, ///< Producto vectorial (cross-product)
-        OP_DOT   = 4'd1  ///< Producto punto (dot-product)
+        OP_CROSS = 4'd1, ///< Producto vectorial (cross-product)
+        OP_DOT   = 4'd2  ///< Producto punto (dot-product)
     } op_code_t;
 
     /**
