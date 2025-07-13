@@ -97,9 +97,9 @@ module hsi_vector_core_wrapper (
   input  logic        req_i,       ///< Petición de acceso al wrapper
   input  logic [7:0]  addr_i,      ///< Dirección de registro
   input  logic        we_i,        ///< Indica operación de escritura
-  /* verilator lint_off UNUSEDSIGNAL */
+  /* verilator lint_off UNUSED */
   input  logic [31:0] wdata_i,     ///< Datos de entrada para escritura
-  /* verilator lint_on UNUSEDSIGNAL */
+  /* verilator lint_on UNUSED */
   output logic [31:0] rdata_o,     ///< Datos de salida tras lectura
   output logic        rvalid_o,    ///< Lectura válida (1 ciclo)
 
