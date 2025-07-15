@@ -190,33 +190,38 @@ module hsi_vector_core #(
 
 
     /**
-     * @class state_t
-     * @brief Estados de la máquina de estados finita (FSM)
-     * Esta enumeración define los estados de la FSM que controla el flujo de datos y operaciones.
-     * - IDLE: Estado inicial, espera a recibir la señal de inicio.
-     * - CAPTURE: Captura los datos de entrada.
-     * - READ: Lee los vectores de las FIFOs de entrada.
-     * - COMPUTE: Realiza el cálculo del producto vectorial o punto.
-     * - WRITE: Prepara el resultado para escribir en la FIFO de salida.
-     * - WRITE_DONE: Finaliza la escritura en la FIFO de salida.
-     * - ERROR: Maneja errores detectados durante la operación.
-     * \dot
-     * digraph FSM {
-     *   rankdir=LR;
-     *   node [shape=ellipse, style=filled, fillcolor=lightgray];
-     *   IDLE -> CAPTURE     [label="start && valid && !in1_empty && !in2_empty && !out_full"];
-     *   IDLE -> ERROR       [label="start && error_code != ERR_NONE"];
-     *   CAPTURE -> READ;
-     *   READ -> COMPUTE;
-     *   COMPUTE -> WRITE    [label="(OP_CROSS) || (OP_DOT && i >= num_bands)"];
-     *   WRITE -> WRITE_DONE;
-     *   WRITE_DONE -> CAPTURE [label="!in1_empty && !in2_empty"];
-     *   WRITE_DONE -> IDLE    [label="otherwise"];
-     *   ERROR -> IDLE         [label="!start"];
-     *   default -> ERROR;
-     * }
-     * \enddot
-     */
+    * @class state_t
+    * @brief Estados de la máquina de estados finita (FSM)
+    * Esta enumeración define los estados de la FSM que controla el flujo de datos y operaciones.
+    * - IDLE: Estado inicial. Espera a que se reciba `start` con parámetros válidos para comenzar el procesamiento.
+    * - CAPTURE: Espera a que las FIFOs de entrada tengan datos disponibles para iniciar la lectura.
+    * - READ: Lee los vectores desde las FIFOs de entrada.
+    * - COMPUTE: Realiza el cálculo del producto vectorial (CROSS) o producto punto (DOT).
+    * - WRITE: Prepara el resultado del cálculo para escribirlo en la FIFO de salida.
+    * - WRITE_DONE: Finaliza la escritura y decide si se continúa procesando o se vuelve a IDLE.
+    * - ERROR: Estado de fallo si la configuración de entrada no es válida.
+    * \dot
+    * digraph FSM {
+    *   rankdir=LR;
+    *   node [shape=ellipse, style=filled, fillcolor=lightgray];
+    *
+    *   IDLE -> CAPTURE     [label="start && error_code == ERR_NONE && ((op_code == OP_CROSS && num_bands == 3) || (op_code == OP_DOT && num_bands > 0)) && !out_full"];
+    *   IDLE -> ERROR       [label="start && error_code != ERR_NONE"];
+    *
+    *   CAPTURE -> READ     [label="!in1_empty && !in2_empty"];
+    *   READ -> COMPUTE;
+    *   COMPUTE -> WRITE    [label="(op_code == OP_CROSS) || (op_code == OP_DOT && i >= num_bands)"];
+    *   WRITE -> WRITE_DONE [label="!out_full"];
+    *
+    *   WRITE_DONE -> CAPTURE [label="!in1_empty && !in2_empty"];
+    *   WRITE_DONE -> IDLE    [label="otherwise"];
+    *
+    *   ERROR -> IDLE         [label="!start"];
+    *   default -> ERROR;
+    * }
+    * \enddot
+    */
+
 
     typedef enum logic [3:0] {
         IDLE    = 4'd0,
@@ -359,12 +364,12 @@ module hsi_vector_core #(
     always_comb begin
         next_state = state;
         case (state)
-            IDLE:    if (start && error_code == ERR_NONE && ((op_code == OP_CROSS && num_bands == 3) || (op_code == OP_DOT && num_bands > 0)) && !in1_empty && !in2_empty && !out_full) next_state = CAPTURE;
+            IDLE:    if (start && error_code == ERR_NONE && ((op_code == OP_CROSS && num_bands == 3) || (op_code == OP_DOT && num_bands > 0)) && !out_full) next_state = CAPTURE;
                      else if (start && error_code != ERR_NONE) next_state = ERROR;
-            CAPTURE: next_state = READ;
+            CAPTURE: if(!in1_empty && !in2_empty ) next_state = READ;
             READ:    next_state = COMPUTE;
             COMPUTE: if((op_code == OP_CROSS) || (op_code == OP_DOT && i >= num_bands)) next_state = WRITE;
-            WRITE:   next_state = WRITE_DONE;
+            WRITE:   if(!out_full) next_state = WRITE_DONE;
             WRITE_DONE: if(!in1_empty && !in2_empty) next_state = CAPTURE;
                         else next_state = IDLE;
             ERROR:   if (!start) next_state = IDLE;
