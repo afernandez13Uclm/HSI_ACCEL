@@ -26,7 +26,6 @@ help:
 	@echo "  hsi_core       Compila y simula el testbench del módulo hsi_vector_core"
 	@echo "  hsi_wrapper    Compila y simula el wrapper de hsi_vector_core (con interfaz OBI)"
 	@echo "  coverage       Genera informe HTML con la cobertura funcional (genhtml)"
-	@echo "  diagram        Genera diagrama RTL del módulo fifo_cache (SVG en diagrams/)"
 	@echo "  doc            Genera documentación HTML con Doxygen en doc/html/"
 	@echo "  all            Ejecuta todos los pasos anteriores (excepto help y clean)"
 	@echo "  clean          Elimina archivos generados por Verilator, cobertura, doc, etc."
@@ -64,13 +63,6 @@ hsi_wrapper:
 coverage:
 	verilator_coverage --write-info $(BUILD_DIR)/coverage.info $(BUILD_DIR)/coverage.dat
 	genhtml $(BUILD_DIR)/coverage.info --output-directory $(COVERAGE_DIR)
-
-diagram:
-	mkdir -p $(DIAGRAM_DIR)
-	echo "read_verilog -sv rtl/fifo_cache.sv; \
-	      hierarchy -top fifo_cache; \
-	      proc; opt; memory; opt; techmap; \
-	      show -format svg -prefix $(DIAGRAM_DIR)/fifo_diagram" | yosys
 
 doc:
 	doxygen Doxyfile

@@ -217,7 +217,7 @@ module hsi_vector_core #(
     *   WRITE_DONE -> IDLE    [label="otherwise"];
     *
     *   ERROR -> IDLE         [label="!start"];
-    *   default -> ERROR;
+    *
     * }
     * \enddot
     */

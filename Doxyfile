@@ -1,7 +1,3 @@
-#-----------------------------------------------------------------------------
-# Doxygen config file para SystemVerilog con comentarios tipo Doxygen
-#-----------------------------------------------------------------------------
-
 # Project
 PROJECT_NAME           = "HSI RTL Modules"
 PROJECT_BRIEF          = "Documentación automática de módulos RTL para procesamiento HSI"

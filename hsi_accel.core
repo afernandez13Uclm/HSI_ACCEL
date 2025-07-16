@@ -9,7 +9,6 @@ name: uclm:hsi:hsi_accel:1.0.0
 description: HSI vector accelerator with OBI interface
 
 filesets:
-  # RTL description
   rtl:
     files:
     - hw/rtl/fifo_cache.sv
@@ -18,104 +17,12 @@ filesets:
     - hw/rtl/hsi_accel_obi.sv
     file_type: systemVerilogSource
 
-  verilator-tb:
+  verilator_tb:
     files:
-    - tb/hsi_vector_core_tb.sv: {file_type: systemVerilogSource}
-    - tb/hsi_vector_core_wrapper_tb.sv: {file_type: systemVerilogSource}
+    - tb/hsi_vector_core_tb.sv
+    - tb/hsi_vector_core_wrapper_tb.sv
     - sim/sim_main.cpp
-    file_type: cppSource
-
-scripts:
-  prepare_dirs:
-    cmd:
-    - mkdir
-    - "-p"
-    - "../../sim-common"
-
-  copy_waves:
-    cmd:
-    - cp
-    - "logs/waves.fst"
-    - "../../sim-common/"
-
-targets:
-  default: &default
-    filesets:
-    - rtl
-    toplevel: hsi_accel_obi
-
-  sim:
-    <<: *default
-    description: Simulate the design
-    default_tool: verilator
-    toplevel:
-    - "tool_verilator ? (hsi_vector_core_wrapper_tb)"
-    - "!tool_verilator ? (hsi_accel_obi)"
-    filesets_append:
-    - verilator-tb
-    flags:
-      rtl_vendor: false
-    hooks:
-      pre_run:
-      - prepare_dirs
-      post_run:
-      - copy_waves
-    parameters:
-    - AW=32
-    - DW=32
-    - tool_verilator ? (log_level)
-    tools:
-      verilator:
-        mode: cc
-        verilator_options:
-        - '--cc'
-        - '--assert'
-        - '--trace'
-        - '--trace-fst'
-        - '--trace-structs'
-        - '--trace-max-array 128'
-        - '--x-assign unique'
-        - '--x-initial unique'
-        - '--exe'
-        - 'sim_main.cpp'
-        - '-Wall'
-        - '-Wpedantic'
-
-  format:
-    filesets:
-    - rtl
-    description: Format source files using verible-verilog-format
-    default_tool: veribleformat
-    toplevel: hsi_accel_obi
-    tools:
-      veribleformat:
-        verible_format_args:
-        - '--assignment_statement_alignment=align'
-        - '--case_items_alignment=align'
-        - '--formal_parameters_indentation=indent'
-        - '--named_parameter_alignment=align'
-        - '--named_parameter_indentation=indent'
-        - '--named_port_alignment=align'
-        - '--named_port_indentation=indent'
-        - '--port_declarations_alignment=align'
-        - '--port_declarations_indentation=indent'
-        - '--assignment_statement_alignment=align'
-        - '--module_net_variable_alignment=align'
-        - '--inplace'
-
-  lint:
-    filesets:
-    - rtl
-    description: Perform static analysis using Verible
-    default_tool: veriblelint
-    toplevel: hsi_accel_obi
-    tools:
-      veriblelint:
-        ruleset: default
-        verible_lint_args:
-        - '--waiver_files=../../../hw/misc/verible-lint.waiver'
-        rules:
-        - 'line-length=length:120'
+    file_type: systemVerilogSource
 
 parameters:
   log_level:
@@ -136,3 +43,87 @@ parameters:
     description: Data width
     default: 32
     paramtype: vlogparam
+
+targets:
+  default:
+    filesets:
+    - rtl
+    toplevel: hsi_accel_obi
+
+  sim_tb:
+    description: Simulate HSI wrapper with Verilator
+    filesets:
+    - rtl
+    - verilator_tb
+    toplevel: hsi_vector_core_wrapper_tb
+    parameters:
+    - AW=32
+    - DW=32
+    - tool_verilator ? (log_level)
+    default_tool: verilator
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+        - --cc
+        - --exe
+        - --trace
+        - --timing
+        - --coverage
+        - --assert
+        - -Wall
+        - -Wno-WIDTHTRUNC
+        - -Wpedantic
+        - -DVL_MODULE=\"Vhsi_vector_core_tb.h\"
+        - -DVL_TOP_TYPE=Vhsi_vector_core_tb
+        - -Irtl
+        - -Itb
+        - sim/sim_main.cpp
+
+  lint:
+    filesets:
+    - rtl
+    description: Lint RTL sources using Verible
+    default_tool: veriblelint
+    toplevel: hsi_accel_obi
+    tools:
+      veriblelint:
+        ruleset: default
+        verible_lint_args:
+        - '--waiver_files=../../../hw/misc/verible-lint.waiver'
+        rules:
+        - 'line-length=length:120'
+
+  format:
+    filesets:
+    - rtl
+    description: Format RTL files
+    default_tool: veribleformat
+    toplevel: hsi_accel_obi
+    tools:
+      veribleformat:
+        verible_format_args:
+        - '--assignment_statement_alignment=align'
+        - '--case_items_alignment=align'
+        - '--formal_parameters_indentation=indent'
+        - '--named_parameter_alignment=align'
+        - '--named_parameter_indentation=indent'
+        - '--named_port_alignment=align'
+        - '--named_port_indentation=indent'
+        - '--port_declarations_alignment=align'
+        - '--port_declarations_indentation=indent'
+        - '--module_net_variable_alignment=align'
+        - '--inplace'
+
+scripts:
+  prepare_dirs:
+    cmd:
+    - mkdir
+    - -p
+    - ../../sim-common
+
+  copy_waves:
+    cmd:
+    - cp
+    - logs/waves.fst
+    - ../../sim-common/
