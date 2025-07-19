@@ -51,7 +51,7 @@
  * | pixel_done_i   | input     | Señal que indica que el núcleo completó un cálculo.                        |
  * | error_code_i   | input     | Código de error proveniente del núcleo.                                    |
  */
- */
+ 
 module hsi_vector_core_wrapper #(
     parameter int OP_CODE_WIDTH   = 8,   ///< Ancho del código de operación
     parameter int NUM_BANDS_WIDTH = 8,   ///< Ancho del número de bandas
