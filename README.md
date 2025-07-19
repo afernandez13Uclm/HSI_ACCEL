@@ -134,7 +134,7 @@ To dowload the toolchain you can follow the next intructions:
    cd GR-HEEP
    git checkout connect-bus
 
-2. **Copy the file hw/vendor/hsi_accel.vendor.hjson into the folder GR-HEEP/hw/vendor**
+2. **Copy the file vendor/hsi_accel.vendor.hjson into the folder GR-HEEP/hw/vendor**
 
 3. **Inlcude the HSI_ACCEL repo into the project**
     ```bash
@@ -144,13 +144,13 @@ To dowload the toolchain you can follow the next intructions:
     ```json
     ext_xbar_slaves: {
         hsi_accel: {
-        offset: "0x00010000",
+        offset: "0x00000000",
         length: "0x00010000"
         }
     }
     ext_periph: {
         hsi_accel: {
-            offset: "0x00010000",
+            offset: "0x00000000",
             length: "0x00001000"
         }
     }
@@ -167,15 +167,15 @@ To dowload the toolchain you can follow the next intructions:
 
         // External peripherals master ports
         output obi_pkg::obi_req_t  [gr_heep_pkg::ExtXbarNMasterRnd-1:0] gr_heep_master_req_o,
-        input  obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNMasterRnd-1:0] gr_heep_master_resp_i,
+        input obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNMasterRnd-1:0] gr_heep_master_resp_i,
 
         // External peripherals slave ports
-        input  obi_pkg::obi_req_t  [gr_heep_pkg::ExtXbarNSlaveRnd-1:0]  gr_heep_slave_req_i,
-        output obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNSlaveRnd-1:0]  gr_heep_slave_resp_o,
+        input obi_pkg::obi_req_t  [gr_heep_pkg::ExtXbarNSlaveRnd-1:0] gr_heep_slave_req_i,
+        output obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNSlaveRnd-1:0] gr_heep_slave_resp_o,
 
         // External peripherals configuration ports
-        input  reg_pkg::reg_req_t  [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_req_i,
-        output reg_pkg::reg_rsp_t  [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_rsp_o,
+        input reg_pkg::reg_req_t [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_req_i,
+        output reg_pkg::reg_rsp_t [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_rsp_o,
 
         /* verilator lint_on UNUSED */
 
@@ -183,27 +183,16 @@ To dowload the toolchain you can follow the next intructions:
         output logic [gr_heep_pkg::ExtInterruptsRnd-1:0] gr_heep_peripheral_int_o
     );
 
-    // Assign default values to the output signals. To be modified if the
-    // peripherals are instantiated.
-    assign gr_heep_master_req_o = '0;
-    assign gr_heep_peripheral_rsp_o = '0;
-    assign gr_heep_peripheral_int_o = '0;
+        // Assign default values to the output signals. To be modified if the
+        // peripherals are instantiated.
+        assign gr_heep_master_req_o = '0;
+        assign gr_heep_slave_resp_o = '0;
+        assign gr_heep_peripheral_rsp_o = '0;
+        assign gr_heep_peripheral_int_o = '0;
 
-    // Instantiate here the external peripherals
-    hsi_accel_obi #(
-        .AW(32),
-        .DW(32)
-    ) u_hsi_accel (
-        .clk_i     (clk_i),
-        .rst_ni    (rst_ni),
-        .req_i     (gr_heep_slave_req_i[0]),
-        .addr_i    (gr_heep_slave_req_i[0].addr),
-        .we_i      (gr_heep_slave_req_i[0].we),
-        .wdata_i   (gr_heep_slave_req_i[0].wdata),
-        .rdata_o   (gr_heep_slave_resp_o[0].rdata),
-        .rvalid_o  (gr_heep_slave_resp_o[0].rvalid)
-    );
+
     endmodule
+
 
 6. **add de dependence to file "peripherals.core"**
     ```bash
