@@ -323,8 +323,10 @@ module hsi_vector_core #(
                 end
                 READ: begin
                     for (i = 0; i < num_bands; i = i + 1) begin
-                        vec1[num_bands - 1 - i] <= in1_data_out[(i*COMPONENT_WIDTH) +: COMPONENT_WIDTH];
-                        vec2[num_bands - 1 - i] <= in2_data_out[(i*COMPONENT_WIDTH) +: COMPONENT_WIDTH];
+                        /* verilator lint_off BLKSEQ */
+                        vec1[num_bands - 1 - i] = in1_data_out[(i*COMPONENT_WIDTH) +: COMPONENT_WIDTH];
+                        vec2[num_bands - 1 - i] = in2_data_out[(i*COMPONENT_WIDTH) +: COMPONENT_WIDTH];
+                        /* verilator lint_on BLKSEQ */
                     end
                     for (i = 0; i < COMPONENTS_MAX; i = i + 1) result[i] <= 0;
                     i = 0;

@@ -310,7 +310,13 @@ module hsi_vector_core_wrapper #(
                         end
                         ADDR_COMMAND: begin
                             logic [2:0] cmd;
-                            cmd = apply_be(32'h0, wdata_i, be_i)[2:0];
+                            /* verilator lint_off UNUSED*/
+                            logic [31:0] tmp_full;
+                            /* verilator lint_on UNUSED*/
+                            logic [2:0]  tmp;
+                            tmp_full = apply_be(32'h0, wdata_i, be_i);
+                            tmp      = tmp_full[2:0];
+                            cmd = tmp[2:0];
                             if (cmd[1]) done_flag_reg  <= 1'b0;          // CLEAR_DONE
                             if (cmd[2]) error_code_reg <= '0;            // CLEAR_ERROR
                             if (cmd[0] && !busy_reg) begin               // START

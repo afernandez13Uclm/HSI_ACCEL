@@ -28,7 +28,7 @@ HSI_ACCEL/
 
 ## Requirements
 
-- Verilator v5.x
+- Verilator v > 4.260 (Fully tested with Verilator 5.036 in TB and Verilator 4.260 in GR-HEEP)
 - GTKWave (optional, for waveform viewing)
 - C++ Compiler (g++, clang++)
 - GNU Make
@@ -187,54 +187,116 @@ To dowload the toolchain you can follow the next intructions:
 4. **Update the memory map in config/gr-heep-cfg.hjson**
     ```json
     ext_xbar_slaves: {
-        hsi_accel: {
-        offset: "0x00000000",
-        length: "0x00010000"
-        }
-    }
-    ext_periph: {
-        hsi_accel: {
-            offset: "0x00000000",
-            length: "0x00001000"
-        }
-    }
+            hsi_accel: {
+                offset: "0x10000000"
+                length: "0x00010000"
+            }
+    },
+
+        ext_periph: {
+            hsi_accel: {
+                offset: "0x10000000"
+                length: "0x00001000"
+            }
+    },
 
     external_interrupts: 1
     ```
 
 5. **Instantiate the accelerator in hw/peripherals/gr_heep_peripherals.sv.tpl**
     ```SystemVerilog
-    module gr_heep_peripherals (
-        /* verilator lint_off UNUSED */
-
+        module gr_heep_peripherals (
         input logic clk_i,
         input logic rst_ni,
 
         // External peripherals master ports
         output obi_pkg::obi_req_t  [gr_heep_pkg::ExtXbarNMasterRnd-1:0] gr_heep_master_req_o,
-        input obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNMasterRnd-1:0] gr_heep_master_resp_i,
+        /* verilator lint_off UNUSED */
+        input  obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNMasterRnd-1:0] gr_heep_master_resp_i,
+        /* verilator lint_on UNUSED */
 
         // External peripherals slave ports
-        input obi_pkg::obi_req_t  [gr_heep_pkg::ExtXbarNSlaveRnd-1:0] gr_heep_slave_req_i,
-        output obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNSlaveRnd-1:0] gr_heep_slave_resp_o,
+        input  obi_pkg::obi_req_t  [gr_heep_pkg::ExtXbarNSlaveRnd-1:0]  gr_heep_slave_req_i,
+        output obi_pkg::obi_resp_t [gr_heep_pkg::ExtXbarNSlaveRnd-1:0]  gr_heep_slave_resp_o,
 
         // External peripherals configuration ports
-        input reg_pkg::reg_req_t [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_req_i,
-        output reg_pkg::reg_rsp_t [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_rsp_o,
-
+        /* verilator lint_off UNUSED */
+        input  reg_pkg::reg_req_t  [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_req_i,
         /* verilator lint_on UNUSED */
+        output reg_pkg::reg_rsp_t  [gr_heep_pkg::ExtPeriphNSlaveRnd-1:0] gr_heep_peripheral_rsp_o,
 
         // External peripherals interrupt ports
         output logic [gr_heep_pkg::ExtInterruptsRnd-1:0] gr_heep_peripheral_int_o
     );
 
-        // Assign default values to the output signals. To be modified if the
-        // peripherals are instantiated.
-        assign gr_heep_master_req_o = '0;
-        assign gr_heep_slave_resp_o = '0;
-        assign gr_heep_peripheral_rsp_o = '0;
-        assign gr_heep_peripheral_int_o = '0;
+    // ====================================
+    // Default assignments for unused ports
+    // ====================================
+    assign gr_heep_master_req_o = '0;
 
+    for (genvar i = 1; i < gr_heep_pkg::ExtXbarNSlaveRnd; i++) begin
+        assign gr_heep_slave_resp_o[i] = '0;
+    end
+
+    for (genvar i = 1; i < gr_heep_pkg::ExtPeriphNSlaveRnd; i++) begin
+        assign gr_heep_peripheral_rsp_o[i] = '0;
+    end
+
+    for (genvar i = 1; i < gr_heep_pkg::ExtInterruptsRnd; i++) begin
+        assign gr_heep_peripheral_int_o[i] = 1'b0;
+    end
+
+    // ===============================
+    // Instancia del acelerador HSI
+    // ===============================
+    /* verilator lint_off UNUSED */
+    logic [47:0] hsi_in1_data, hsi_in2_data;
+    logic        hsi_in1_wr_en, hsi_in2_wr_en;
+    logic [47:0] hsi_out_data;
+    logic        hsi_out_rd_en, hsi_out_empty;
+    logic unused_err; // todo: for future implementation
+    /* verilator lint_on UNUSED */
+
+
+    hsi_accel_obi #(
+        .COMPONENT_WIDTH(16),
+        .FIFO_DEPTH(16),
+        .COMPONENTS_MAX(3)
+    ) u_hsi_accel_obi (
+        .clk_i        (clk_i),
+        .rst_ni       (rst_ni),
+
+        // Interfaz OBI desde el bus de esclavos externos
+        .req_i        (gr_heep_slave_req_i[0].req),
+        .we_i         (gr_heep_slave_req_i[0].we),
+        .be_i         (gr_heep_slave_req_i[0].be),
+        .addr_i       (gr_heep_slave_req_i[0].addr),
+        .wdata_i      (gr_heep_slave_req_i[0].wdata),
+        .gnt_o        (gr_heep_slave_resp_o[0].gnt),
+        .rvalid_o     (gr_heep_slave_resp_o[0].rvalid),
+        .rdata_o      (gr_heep_slave_resp_o[0].rdata),
+        .err_o        (unused_err),
+
+        // FIFO interface (conectada a cero por ahora)
+        .in1_wr_en_i  (hsi_in1_wr_en),
+        .in2_wr_en_i  (hsi_in2_wr_en),
+        .in1_data_i   (hsi_in1_data),
+        .in2_data_i   (hsi_in2_data),
+        .out_rd_en_i  (hsi_out_rd_en),
+        .out_empty_o  (hsi_out_empty),
+        .out_data_o   (hsi_out_data)
+    );
+
+    // Dummy assignments for FIFO interfaces (sin uso en esta integración)
+    assign hsi_in1_data   = 48'd0;
+    assign hsi_in2_data   = 48'd0;
+    assign hsi_in1_wr_en  = 1'b0;
+    assign hsi_in2_wr_en  = 1'b0;
+    assign hsi_out_rd_en  = 1'b0;
+
+    // No se usa interrupción
+    assign gr_heep_peripheral_int_o[0] = 1'b0;
+    assign gr_heep_peripheral_rsp_o[0] = '0;
 
     endmodule
     ```
