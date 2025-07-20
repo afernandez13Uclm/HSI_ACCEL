@@ -21,6 +21,7 @@ HSI_ACCEL/
 │   └── hsi_accel_obi_tb.sv         # Testbench for top file
 ├── sim/
 │   └── sim_main.cpp                # Verilator simulation driver (C++)
+├── scripts/                        # Project automation scripts
 ├── Makefile                        # Build and simulation automation
 ├── hsi_accel.core                  # Package core file for x-heep integration
 ```

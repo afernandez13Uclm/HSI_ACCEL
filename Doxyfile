@@ -10,7 +10,7 @@ RECURSIVE              = YES
 # File patterns y asociaciones
 FILE_PATTERNS          = *.sv *.v *cpp *md
 EXTENSION_MAPPING      = sv=C++
-INPUT_FILTER           = "./sv_filter.sh"
+INPUT_FILTER           = "./scripts/sv_filter.sh"
 
 
 # Extracción
