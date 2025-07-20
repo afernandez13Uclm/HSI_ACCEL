@@ -68,37 +68,66 @@ make clean
 ## Functional Requirements Tested
 
 The testbench `hsi_vector_core_tb.sv` verifies:
- * R1: The core shall correctly compute the vector (cross) product of two signed 3-component vectors.
+ * **R1**: The core shall correctly compute the vector (cross) product of two signed 3-component vectors.
  * R1.2: (1,0,0)×(0,1,0) → (0,0,1)
  * R1.3: (0,0,1)×(1,0,0) → (0,1,0)
  * R1.4: (1,2,3)×(4,5,6) → (−3,6,−3)
  * R1.5: Correct handling of negative components: (−1,0,0)×(0,1,0) → (0,0,−1)
- * R2: The core shall correctly compute the dot (scalar) product of two signed 3-component vectors.
+ * **R2**: The core shall correctly compute the dot (scalar) product of two signed 3-component vectors.
  * R2.1: (1,0,0)·(0,1,0) = 0
  * R2.2: (1,2,3)·(4,5,6) = 32
  * R2.3: (−1,0,0)·(0,1,0) = 0
- * R3: The core shall correctly handle error conditions:
+ * **R3**: The core shall correctly handle error conditions:
  * R3.1: If OP_CROSS is received but num_bands != 3, it shall assert ERR_OP.
  * R3.2: If num_bands > COMPONENTS_MAX, it shall assert ERR_BANDS.
 
 The testbench `fifo_cache_tb.sv` verifies:
- * R1: After reset, the FIFO must be empty (empty == 1).
- * R2: Write is permitted when the FIFO is not full (wr_en == 1 and full == 0).
- * R3: The full signal must assert once DEPTH writes have been performed.
- * R4: Read is permitted when the FIFO is not empty (rd_en == 1 and empty == 0).
- * R5: The empty signal must assert after all data has been read.
- * R6: Writing when full is asserted must not alter stored data or pointer values.
- * R7: Reading when empty is asserted must not alter stored data or pointer values.
- * R8: Data integrity: data_out must match the sequence that was written.
- * R9: Back-to-back write and read operations must execute consecutively without errors.
- * R10: Robust behavior under random operation sequences, with no protocol violations.
+ * **R1**: After reset, the FIFO must be empty (empty == 1).
+ * **R2**: Write is permitted when the FIFO is not full (wr_en == 1 and full == 0).
+ * **R3**: The full signal must assert once DEPTH writes have been performed.
+ * **R4**: Read is permitted when the FIFO is not empty (rd_en == 1 and empty == 0).
+ * **R5**: The empty signal must assert after all data has been read.
+ * **R6**: Writing when full is asserted must not alter stored data or pointer values.
+ * **R7**: Reading when empty is asserted must not alter stored data or pointer values.
+ * **R8**: Data integrity: data_out must match the sequence that was written.
+ * **R9**: Back-to-back write and read operations must execute consecutively without errors.
+ * **R10**: Robust behavior under random operation sequences, with no protocol violations.
 
-The testbench `hsi_vector_core_wrapper_tb.sv` verifies:
- * R1: Wrapper interprets start/op_code/pixel_size register writes correctly.
- * R2: Read operations return busy status, valid result and pixel_done correctly.
- * R3: Data written to `hsi_vector_core` triggers the expected behavior.
- * R4: Output result register reflects the result from the core.
- * R5: Wrapper issues single-cycle start pulse on valid control write.
+The testbench `hsi_vector_core_wrapper_tb.sv` verifies the following functional requirements:
+
+* **R1**: After reset, all registers are properly cleared:
+  - `OP_CODE = 0`
+  - `NUM_BANDS = 0`
+  - `STATUS = 0` (DONE = 0, ERROR_CODE = 0, BUSY = 0)
+
+* **R2**: The `OP_CODE` register is writable and can be read back correctly.
+
+* **R3**: The `NUM_BANDS` register supports full and partial byte writes using byte enable (`BE`).
+
+* **R4**: Writing `START` to the `COMMAND` register generates a single-cycle `start_o` pulse, and sets `BUSY` high.
+
+* **R5**: While `BUSY` is active, further writes to `COMMAND.START` do not re-trigger `start_o`.
+
+* **R6**: When `pixel_done_i` is asserted:
+  - `DONE` is set.
+  - `BUSY` is cleared.
+
+* **R7**: Writing `CLEAR_DONE` to `COMMAND` clears the `DONE` flag in `STATUS`.
+
+* **R8**: If `error_code_i` is set while `BUSY` is active:
+  - The `ERROR_CODE` is captured.
+  - `BUSY` is cleared.
+
+* **R9**: Writing `CLEAR_ERROR` to `COMMAND` clears the `ERROR_CODE` field in `STATUS`.
+
+* **R10**: Accessing an invalid address:
+  - Activates `err_o`.
+  - Does **not** alter any valid register (e.g., `OP_CODE` remains unchanged).
+
+* **R11**: A new operation can be started after clearing `DONE`, triggering `start_o` again and setting `BUSY`.
+
+* **R12**: `start_o` is a **single-cycle pulse**; multiple cycles are flagged as an error.
+
 
 ## Notes
 

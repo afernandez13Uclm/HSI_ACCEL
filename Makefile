@@ -6,10 +6,12 @@ VFLAGS           = $(INCLUDE_DIRS) -Wall --trace -Wno-WIDTHTRUNC --timing --cove
 TOP_MODULE_FIFO  = fifo_cache_tb
 TOP_MODULE_ALU   = hsi_vector_core_tb
 TOP_MODULE_WRAPPER = hsi_vector_core_wrapper_tb
+TOP_MODULE_OBI   = hsi_accel_obi_tb
 
 SRC_FIFO         = tb/fifo_cache_tb.sv hw/rtl/fifo_cache.sv
 SRC_ALU          = tb/hsi_vector_core_tb.sv hw/rtl/hsi_vector_core.sv  hw/rtl/fifo_cache.sv
-SRC_WRAPPER = tb/hsi_vector_core_wrapper_tb.sv hw/rtl/hsi_vector_core_wrapper.sv
+SRC_WRAPPER      = tb/hsi_vector_core_wrapper_tb.sv hw/rtl/hsi_vector_core_wrapper.sv
+SRC_OBI          = tb/hsi_accel_obi_tb.sv hw/rtl/hsi_accel_obi.sv hw/rtl/hsi_vector_core_wrapper.sv hw/rtl/hsi_vector_core.sv hw/rtl/fifo_cache.sv
 SRC_CPP          = sim/sim_main.cpp
 
 BUILD_DIR        = build/
@@ -25,13 +27,14 @@ help:
 	@echo "  fifo_cache     Compila y simula el testbench del módulo fifo_cache"
 	@echo "  hsi_core       Compila y simula el testbench del módulo hsi_vector_core"
 	@echo "  hsi_wrapper    Compila y simula el wrapper de hsi_vector_core (con interfaz OBI)"
+	@echo "  hsi_obi        Compila y simula el testbench del módulo hsi_accel_obi"
 	@echo "  coverage       Genera informe HTML con la cobertura funcional (genhtml)"
 	@echo "  doc            Genera documentación HTML con Doxygen en doc/html/"
 	@echo "  all            Ejecuta todos los pasos anteriores (excepto help y clean)"
 	@echo "  clean          Elimina archivos generados por Verilator, cobertura, doc, etc."
 	@echo "  help           Muestra esta ayuda"
 
-all: fifo_cache hsi_core coverage diagram doc
+all: fifo_cache hsi_core hsi_wrapper hsi_obi coverage diagram doc
 
 fifo_cache:
 	$(VERILATOR) $(VFLAGS) --cc --exe \
@@ -50,6 +53,7 @@ hsi_core:
 		-Mdir $(BUILD_DIR)
 	cd $(BUILD_DIR) && make -f V$(TOP_MODULE_ALU).mk
 	cd $(BUILD_DIR) && ./V$(TOP_MODULE_ALU)
+
 hsi_wrapper:
 	$(VERILATOR) $(VFLAGS) --cc --exe \
 		$(SRC_WRAPPER) $(SRC_CPP) \
@@ -59,6 +63,14 @@ hsi_wrapper:
 	cd $(BUILD_DIR) && make -f V$(TOP_MODULE_WRAPPER).mk
 	cd $(BUILD_DIR) && ./V$(TOP_MODULE_WRAPPER)
 
+hsi_obi:
+	$(VERILATOR) $(VFLAGS) --cc --exe \
+		$(SRC_OBI) $(SRC_CPP) \
+		-CFLAGS "-DVL_MODULE=\\\"V$(TOP_MODULE_OBI).h\\\" -DVL_TOP_TYPE=V$(TOP_MODULE_OBI)" \
+		--top-module $(TOP_MODULE_OBI) \
+		-Mdir $(BUILD_DIR)
+	cd $(BUILD_DIR) && make -f V$(TOP_MODULE_OBI).mk
+	cd $(BUILD_DIR) && ./V$(TOP_MODULE_OBI)
 
 coverage:
 	verilator_coverage --write-info $(BUILD_DIR)/coverage.info $(BUILD_DIR)/coverage.dat
@@ -68,6 +80,6 @@ doc:
 	doxygen Doxyfile
 
 clean:
-	rm -rf $(BUILD_DIR) $(COVERAGE_DIR) $(DIAGRAM_DIR) doc *.vcd *.o *.d *.vvp *.log 
+	rm -rf $(BUILD_DIR) $(COVERAGE_DIR) $(DIAGRAM_DIR) doc *.vcd *.o *.d *.vvp *.log
 
-.PHONY: all fifo_cache hsi_core hsi_wrapper coverage diagram doc clean help
+.PHONY: all fifo_cache hsi_core hsi_wrapper hsi_obi coverage diagram doc clean help
