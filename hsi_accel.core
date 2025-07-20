@@ -21,6 +21,8 @@ filesets:
     files:
     - tb/hsi_vector_core_tb.sv
     - tb/hsi_vector_core_wrapper_tb.sv
+    - tb/fifo_cache_tb.sv
+    - tb/hsi_accel_obi_tb.sv
     - sim/sim_main.cpp
     file_type: systemVerilogSource
 
@@ -55,7 +57,7 @@ targets:
     filesets:
     - rtl
     - verilator_tb
-    toplevel: hsi_vector_core_wrapper_tb
+    toplevel: hsi_accel_obi_tb
     parameters:
     - AW=32
     - DW=32
@@ -74,8 +76,8 @@ targets:
         - -Wall
         - -Wno-WIDTHTRUNC
         - -Wpedantic
-        - -DVL_MODULE=\"Vhsi_vector_core_tb.h\"
-        - -DVL_TOP_TYPE=Vhsi_vector_core_tb
+        - -DVL_MODULE=\"Vhsi_accel_obi_tb.h\"
+        - -DVL_TOP_TYPE=Vhsi_accel_obi_tb
         - -Irtl
         - -Itb
         - sim/sim_main.cpp
