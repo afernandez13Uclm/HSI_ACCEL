@@ -68,9 +68,9 @@ module hsi_vector_core_wrapper #(
     input  logic                     req_i,
     input  logic                     we_i,
     input  logic [3:0]               be_i,
-    /* verilator lint_off UNUSEDSIGNAL */
+    /* verilator lint_off UNUSED */
     input  logic [31:0]              addr_i,
-    /* verilator lint_on UNUSEDSIGNAL */
+    /* verilator lint_on UNUSED */
     input  logic [31:0]              wdata_i,
     output logic                     gnt_o,
     output logic                     rvalid_o,
