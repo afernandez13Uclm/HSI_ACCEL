@@ -18,6 +18,7 @@ HSI_ACCEL/
 │   ├── fifo_cache_tb.sv            # FIFO module testbench
 │   ├── hsi_vector_core_tb.sv       # HSI core testbench
 │   └── hsi_vector_core_wrapper_tb.sv # Testbench for wrapper module
+│   └── hsi_accel_obi_tb.sv         # Testbench for top file
 ├── sim/
 │   └── sim_main.cpp                # Verilator simulation driver (C++)
 ├── Makefile                        # Build and simulation automation
@@ -41,6 +42,7 @@ This project uses Verilator along with C++ testbench drivers to simulate the RTL
 make hsi_core     # Build and simulate hsi_vector_core_tb
 make fifo_cache   # Build and simulate fifo_cache_tb
 make hsi_wrapper  # Build and simulate hsi_vector_core_wrapper_tb
+make hsi_obi      # Build and simulate hsi_accel_obi_tb
 ```
 
 This will generate:
@@ -50,7 +52,7 @@ This will generate:
 ### View Waveform
 
 ```bash
-gtkwave dump.vcd
+gtkwave build/dump.vcd
 ```
 ### View Coverage
 
@@ -59,10 +61,23 @@ make coverage
 ```
 Open in a web browser the file `coverage/index.html`
 
+### View Documentation
+
+```bash
+make doc
+```
+Open in a web browser the file `doc/index.html`
+
 ### Project clean
 
 ```bash
 make clean
+```
+
+### View Project Help
+
+```bash
+make help
 ```
 
 ## Functional Requirements Tested
@@ -94,39 +109,35 @@ The testbench `fifo_cache_tb.sv` verifies:
  * **R10**: Robust behavior under random operation sequences, with no protocol violations.
 
 The testbench `hsi_vector_core_wrapper_tb.sv` verifies the following functional requirements:
-
 * **R1**: After reset, all registers are properly cleared:
   - `OP_CODE = 0`
   - `NUM_BANDS = 0`
   - `STATUS = 0` (DONE = 0, ERROR_CODE = 0, BUSY = 0)
-
 * **R2**: The `OP_CODE` register is writable and can be read back correctly.
-
 * **R3**: The `NUM_BANDS` register supports full and partial byte writes using byte enable (`BE`).
-
 * **R4**: Writing `START` to the `COMMAND` register generates a single-cycle `start_o` pulse, and sets `BUSY` high.
-
 * **R5**: While `BUSY` is active, further writes to `COMMAND.START` do not re-trigger `start_o`.
-
 * **R6**: When `pixel_done_i` is asserted:
   - `DONE` is set.
   - `BUSY` is cleared.
-
 * **R7**: Writing `CLEAR_DONE` to `COMMAND` clears the `DONE` flag in `STATUS`.
-
 * **R8**: If `error_code_i` is set while `BUSY` is active:
   - The `ERROR_CODE` is captured.
   - `BUSY` is cleared.
-
 * **R9**: Writing `CLEAR_ERROR` to `COMMAND` clears the `ERROR_CODE` field in `STATUS`.
-
 * **R10**: Accessing an invalid address:
   - Activates `err_o`.
   - Does **not** alter any valid register (e.g., `OP_CODE` remains unchanged).
-
 * **R11**: A new operation can be started after clearing `DONE`, triggering `start_o` again and setting `BUSY`.
-
 * **R12**: `start_o` is a **single-cycle pulse**; multiple cycles are flagged as an error.
+
+The testbench `hsi_accel_obi_tb.sv` verifies:
+ * **R1.1**: The wrapper shall correctly store `OP_CODE` and `NUM_BANDS` values written through the OBI interface.
+ * **R1.2**: When configured for the CROSS operation with 3 bands, the system shall compute the correct vector cross product.
+ * **R2.1**: When configured for the DOT operation with 3 bands, the system shall compute the correct scalar dot product.
+ * **R2.2**: In DOT mode, only the Z component shall contain the result, and X/Y components shall be zero.
+ * **R3.1**: If `NUM_BANDS` is not equal to 3 when using `OP_CODE=CROSS`, the wrapper shall raise `ERR_OP` in the STATUS register.
+ * **R3.2**: If `NUM_BANDS` exceeds the maximum allowed (`COMPONENTS_MAX`), the wrapper shall raise `ERR_BANDS` in the STATUS register.
 
 
 ## Notes
@@ -153,6 +164,7 @@ To dowload the toolchain you can follow the next intructions:
 
     export RISCV=/home/$USER/tools/corev
     source .bashrc
+    ```
 
 ### Steps to integrate `HSI_ACCEL`:
 
@@ -162,12 +174,14 @@ To dowload the toolchain you can follow the next intructions:
    git clone https://github.com/davidmallasen/GR-HEEP.git
    cd GR-HEEP
    git checkout connect-bus
+   ```
 
 2. **Copy the file vendor/hsi_accel.vendor.hjson into the folder GR-HEEP/hw/vendor**
 
 3. **Inlcude the HSI_ACCEL repo into the project**
     ```bash
     make vendor-update MODULE_NAME=hsi_accel
+    ```
 
 4. **Update the memory map in config/gr-heep-cfg.hjson**
     ```json
@@ -185,6 +199,7 @@ To dowload the toolchain you can follow the next intructions:
     }
 
     external_interrupts: 1
+    ```
 
 5. **Instantiate the accelerator in hw/peripherals/gr_heep_peripherals.sv.tpl**
     ```SystemVerilog
@@ -221,20 +236,24 @@ To dowload the toolchain you can follow the next intructions:
 
 
     endmodule
+    ```
 
 
 6. **add de dependence to file "peripherals.core"**
     ```bash
     - uclm:hsi:hsi_accel:1.0.0
+    ```
 
 7. **Compile project HW modules again**
     ```bash
     make gr-heep-gen-force
+    ```
 
 8. **Compile the example project to verify the installation (replace the architecture and compiler with the desired)**
     ```bash
     make app PROJECT=example COMPILER_PREFIX=riscv32-corev- ARCH=rv32imfc_zicsr
     make verilator-sim
+    ```
 
 
 ## License
