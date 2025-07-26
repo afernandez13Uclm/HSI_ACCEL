@@ -167,7 +167,7 @@ To dowload the toolchain you can follow the next intructions:
     source .bashrc
     ```
 
-### Steps to integrate `HSI_ACCEL`:
+### Steps to integrate `HSI_ACCEL` rtl files:
 
 1. **Clone GR-HEEP and switch to the `connect-bus` branch:**
 
@@ -317,7 +317,20 @@ To dowload the toolchain you can follow the next intructions:
     make app PROJECT=example COMPILER_PREFIX=riscv32-corev- ARCH=rv32imfc_zicsr
     make verilator-sim
     ```
-
+### Steps to integrate `HSI_ACCEL` sw driver:
+1. **Go to `HSI_ACCEL` dir**
+    ```bash
+    cd /your/path/GR-HEEP/hw/vendor/hsi_accel
+    ```
+2. **Exdcute automatic driver install**
+    ```bash
+    make gr-heep-driver-install
+    ```
+8. **Compile the example project to verify the installation (replace the architecture and compiler with the desired)**
+    ```bash
+    make app PROJECT=hsi_accel COMPILER_PREFIX=riscv32-corev- ARCH=rv32imfc_zicsr
+    make verilator-sim
+    ```
 
 ## License
 

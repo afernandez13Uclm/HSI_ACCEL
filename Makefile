@@ -82,4 +82,13 @@ doc:
 clean:
 	rm -rf $(BUILD_DIR) $(COVERAGE_DIR) $(DIAGRAM_DIR) doc *.vcd *.o *.d *.vvp *.log
 
+gr-heep-driver-install:
+	@echo "Instalando gr-heep-driver..."
+	mkdir -p ../../../sw/external/lib/drivers/hsi-accel/
+	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel_regs.h ../../../sw/external/lib/drivers/hsi-accel/hsi_accel_regs.h
+	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel.c ../../../sw/external/lib/drivers/hsi-accel/hsi_accel.c
+	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel.h ../../../sw/external/lib/drivers/hsi-accel/hsi_accel.h
+	mkdir -p ../../../sw/applications/hsi_accel/
+	cp examples/hsi_accel/main.c ../../../sw/applications/hsi_accel/
+
 .PHONY: all fifo_cache hsi_core hsi_wrapper hsi_obi coverage diagram doc clean help
