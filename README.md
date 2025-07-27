@@ -188,14 +188,14 @@ To dowload the toolchain you can follow the next intructions:
     ```json
     ext_xbar_slaves: {
             hsi_accel: {
-                offset: "0x00000000"
+                offset: "0x10000000"
                 length: "0x00010000"
             }
     },
 
         ext_periph: {
             hsi_accel: {
-                offset: "0x00000000"
+                offset: "0x10000000"
                 length: "0x00001000"
             }
     },
@@ -233,18 +233,6 @@ To dowload the toolchain you can follow the next intructions:
     // Default assignments for unused ports
     // ====================================
     assign gr_heep_master_req_o = '0;
-
-    for (genvar i = 1; i < gr_heep_pkg::ExtXbarNSlaveRnd; i++) begin
-        assign gr_heep_slave_resp_o[i] = '0;
-    end
-
-    for (genvar i = 1; i < gr_heep_pkg::ExtPeriphNSlaveRnd; i++) begin
-        assign gr_heep_peripheral_rsp_o[i] = '0;
-    end
-
-    for (genvar i = 1; i < gr_heep_pkg::ExtInterruptsRnd; i++) begin
-        assign gr_heep_peripheral_int_o[i] = 1'b0;
-    end
 
     // ===============================
     // Instancia del acelerador HSI

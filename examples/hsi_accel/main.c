@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include "hsi_accel_regs.h"
 
-#define TEST_OPCODE   0xA5
-#define TEST_NUM_BANDS 5
+#define TEST_OPCODE   0x1
+#define TEST_NUM_BANDS 2
 
 int main(void) {
     uint32_t r;
