@@ -259,6 +259,7 @@ module hsi_vector_core #(
     logic signed [COMPONENT_WIDTH-1:0] vec2 [0:COMPONENTS_MAX-1];
     logic signed [COMPONENT_WIDTH-1:0] result [0:COMPONENTS_MAX-1];
     integer i;
+    logic signed fifoRdy;
 
     /**
      * @class error_code_t
@@ -289,12 +290,14 @@ module hsi_vector_core #(
             out_wr_en  <= 1'b0;
             pixel_done <= 1'b0;
             error_code <= ERR_NONE;
+            fifoRdy <= 1'b0;
         end else begin
 
             state <= next_state;
 
             case (state)
                 IDLE: begin
+                    fifoRdy <= 1'b0;
                     pixel_done <= !out_empty;
                     if (start) begin
                         if(num_bands > COMPONENTS_MAX) begin
@@ -304,10 +307,9 @@ module hsi_vector_core #(
                                 if (!in1_empty && !in2_empty && !out_full) begin
                                     in1_rd_en <= 1'b1;
                                     in2_rd_en <= 1'b1;
+                                    fifoRdy <= 1'b1;
                                 end else begin
-                                    if (in1_empty || in2_empty) begin
-                                        error_code <= ERR_INPUT_FIFO_EMPTY;
-                                    end else if (out_full) begin
+                                    if (out_full) begin
                                         error_code <= ERR_OUTPUT_FIFO_FULL;
                                     end
                                 end
@@ -318,8 +320,14 @@ module hsi_vector_core #(
                     end
                 end
                 CAPTURE: begin
-                    in1_rd_en <= 1'b0;
-                    in2_rd_en <= 1'b0;
+                    if(in1_rd_en && in2_rd_en) begin
+                        in1_rd_en <= 1'b0; 
+                        in2_rd_en <= 1'b0;
+                        fifoRdy <= 1'b1;
+                    end else if(!in1_empty || !in2_empty) begin
+                        in1_rd_en <= 1'b1; 
+                        in2_rd_en <= 1'b1;
+                    end
                 end
                 READ: begin
                     for (i = 0; i < num_bands; i = i + 1) begin
@@ -368,7 +376,7 @@ module hsi_vector_core #(
         case (state)
             IDLE:    if (start && error_code == ERR_NONE && ((op_code == OP_CROSS && num_bands == 3) || (op_code == OP_DOT && num_bands > 0)) && !out_full) next_state = CAPTURE;
                      else if (start && error_code != ERR_NONE) next_state = ERROR;
-            CAPTURE: if(!in1_empty && !in2_empty ) next_state = READ;
+            CAPTURE: if(!in1_empty && !in2_empty && fifoRdy) next_state = READ;
             READ:    next_state = COMPUTE;
             COMPUTE: if((op_code == OP_CROSS) || (op_code == OP_DOT && i >= num_bands)) next_state = WRITE;
             WRITE:   if(!out_full) next_state = WRITE_DONE;
