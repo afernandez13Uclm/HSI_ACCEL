@@ -188,14 +188,14 @@ To dowload the toolchain you can follow the next intructions:
     ```json
     ext_xbar_slaves: {
             hsi_accel: {
-                offset: "0x10000000"
+                offset: "0x00000000"
                 length: "0x00010000"
             }
     },
 
         ext_periph: {
             hsi_accel: {
-                offset: "0x10000000"
+                offset: "0x00000000"
                 length: "0x00001000"
             }
     },
@@ -326,7 +326,11 @@ To dowload the toolchain you can follow the next intructions:
     ```bash
     make gr-heep-driver-install
     ```
-8. **Compile the example project to verify the installation (replace the architecture and compiler with the desired)**
+3. **Compile project HW modules again**
+    ```bash
+    make gr-heep-gen-force
+    ```
+4. **Compile the example project to verify the installation (replace the architecture and compiler with the desired)**
     ```bash
     make app PROJECT=hsi_accel COMPILER_PREFIX=riscv32-corev- ARCH=rv32imfc_zicsr
     make verilator-sim

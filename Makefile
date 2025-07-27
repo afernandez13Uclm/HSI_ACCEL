@@ -24,15 +24,16 @@ help:
 	@echo "Uso: make [target]"
 	@echo ""
 	@echo "Targets disponibles:"
-	@echo "  fifo_cache     Compila y simula el testbench del módulo fifo_cache"
-	@echo "  hsi_core       Compila y simula el testbench del módulo hsi_vector_core"
-	@echo "  hsi_wrapper    Compila y simula el wrapper de hsi_vector_core (con interfaz OBI)"
-	@echo "  hsi_obi        Compila y simula el testbench del módulo hsi_accel_obi"
-	@echo "  coverage       Genera informe HTML con la cobertura funcional (genhtml)"
-	@echo "  doc            Genera documentación HTML con Doxygen en doc/html/"
-	@echo "  all            Ejecuta todos los pasos anteriores (excepto help y clean)"
-	@echo "  clean          Elimina archivos generados por Verilator, cobertura, doc, etc."
-	@echo "  help           Muestra esta ayuda"
+	@echo "  fifo_cache     			Compila y simula el testbench del módulo fifo_cache"
+	@echo "  hsi_core       			Compila y simula el testbench del módulo hsi_vector_core"
+	@echo "  hsi_wrapper    			Compila y simula el wrapper de hsi_vector_core (con interfaz OBI)"
+	@echo "  hsi_obi        			Compila y simula el testbench del módulo hsi_accel_obi"
+	@echo "  coverage       			Genera informe HTML con la cobertura funcional (genhtml)"
+	@echo "  doc            			Genera documentación HTML con Doxygen en doc/html/"
+	@echo "  all            			Ejecuta todos los pasos anteriores (excepto help y clean)"
+	@echo "  clean          			Elimina archivos generados por Verilator, cobertura, doc, etc."
+	@echo "  gr-heep-driver-install		Instala los archivos necesarios para el driver de gr-heep"
+	@echo "  help           			Muestra esta ayuda"
 
 all: fifo_cache hsi_core hsi_wrapper hsi_obi coverage diagram doc
 
@@ -90,5 +91,6 @@ gr-heep-driver-install:
 	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel.h ../../../sw/external/lib/drivers/hsi-accel/hsi_accel.h
 	mkdir -p ../../../sw/applications/hsi_accel/
 	cp examples/hsi_accel/main.c ../../../sw/applications/hsi_accel/
+	@echo "DONE!"
 
 .PHONY: all fifo_cache hsi_core hsi_wrapper hsi_obi coverage diagram doc clean help

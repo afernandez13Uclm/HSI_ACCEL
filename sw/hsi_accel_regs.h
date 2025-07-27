@@ -1,7 +1,7 @@
 /* hsi_accel_regs.h
  *
  * Definición de offsets y rutinas inline para acceder a los registros
- * de hsi_vector_core_wrapper vía OBI (mapeado en 0x1000_0000).
+ * de hsi_vector_core_wrapper vía OBI (mapeado en HSI_ACCEL_PERIPH_START_ADDRESS).
  */
 
 #ifndef HSI_ACCEL_REGS_H
@@ -9,9 +9,13 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "csr.h"
+#include "gr_heep.h"
+#include "hart.h" // for wait_for_interrupt()
+#include "rv_plic.h"
 
 /* Base del periférico (tal como lo configuras en gr-heep-cfg.hjson) */
-#define HSI_ACCEL_PERIPH_BASE   0x10000000UL
+#define HSI_ACCEL_PERIPH_BASE   HSI_ACCEL_PERIPH_START_ADDRESS
 
 /* Offsets de registro (bytes) */
 #define HSI_ACCEL_OPCODE_OFFSET      0x00  /* OP_CODE [RW] */
