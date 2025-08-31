@@ -87,10 +87,12 @@ gr-heep-driver-install:
 	@echo "Instalando gr-heep-driver..."
 	mkdir -p ../../../sw/external/lib/drivers/hsi-accel/
 	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel_regs.h ../../../sw/external/lib/drivers/hsi-accel/hsi_accel_regs.h
-	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel.c ../../../sw/external/lib/drivers/hsi-accel/hsi_accel.c
-	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel.h ../../../sw/external/lib/drivers/hsi-accel/hsi_accel.h
+	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel_fifo_driver.c ../../../sw/external/lib/drivers/hsi-accel/hsi_accel_fifo_driver.c
+	ln -s ../../../../../hw/vendor/hsi_accel/sw/hsi_accel_fifo_driver.h ../../../sw/external/lib/drivers/hsi-accel/hsi_accel_fifo_driver.h
 	mkdir -p ../../../sw/applications/hsi_accel/
 	cp examples/hsi_accel/main.c ../../../sw/applications/hsi_accel/
+	mkdir -p ../../../sw/applications/hsi_fifo_dma_test/
+	cp examples/hsi_fifo_dma_test/main.c ../../../sw/applications/hsi_fifo_dma_test/
 	@echo "DONE!"
 
 .PHONY: all fifo_cache hsi_core hsi_wrapper hsi_obi coverage diagram doc clean help
